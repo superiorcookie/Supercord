@@ -100,6 +100,10 @@ function getArRPCBinaryPath(): string {
 
     const searchPaths: string[] = [];
 
+    if (IS_DEV) {
+        searchPaths.push(join(STATIC_DIR, "dist", devBinaryName));
+    }
+
     if (platform === "linux") {
         searchPaths.push("/usr/bin/arrpc-bun");
         searchPaths.push("/usr/local/bin/arrpc-bun");
