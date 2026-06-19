@@ -11,11 +11,11 @@ if (isQueryInstance) {
 } else if (CommandLine.values.repair) {
     (async () => {
         const { State } = await import("./settings");
-        if (State.store.equicordDir) {
-            console.error("Cannot repair: using custom Equicord directory.");
+        if (State.store.supercordDir) {
+            console.error("Cannot repair: using custom Supercord directory.");
             process.exit(1);
         }
-        console.log("Repairing Equicord...");
+        console.log("Repairing Supercord...");
         const { downloadVencordAsar } = await import("./utils/vencordLoader");
         await downloadVencordAsar();
         console.log("Repair complete.");

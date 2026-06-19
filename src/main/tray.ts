@@ -225,7 +225,7 @@ export async function initTray(win: BrowserWindow, setIsQuitting: (val: boolean)
                     { id: 5, label: "Launch Arguments", enabled: true, visible: true },
                     { id: 10, label: "Configure Rich Presence", enabled: true, visible: true },
                     { id: 12, type: "separator" as const, enabled: true, visible: true },
-                    { id: 3, label: "Repair Equicord", enabled: true, visible: true },
+                    { id: 3, label: "Repair Supercord", enabled: true, visible: true },
                     { id: 4, label: "Reset Equibop", enabled: true, visible: true },
                     { id: 7, type: "separator" as const, enabled: true, visible: true },
                     { id: 8, label: "Restart", enabled: true, visible: true },
@@ -255,7 +255,7 @@ export async function initTray(win: BrowserWindow, setIsQuitting: (val: boolean)
                         case 2: // about
                             createAboutWindow();
                             break;
-                        case 3: // repair equicord
+                        case 3: // repair supercord
                             downloadVencordAsar()
                                 .then(() => {
                                     setTimeout(() => {
@@ -265,10 +265,10 @@ export async function initTray(win: BrowserWindow, setIsQuitting: (val: boolean)
                                     }, 0);
                                 })
                                 .catch(err => {
-                                    console.error("[Tray] Repair Equicord failed:", err);
+                                    console.error("[Tray] Repair Supercord failed:", err);
                                     dialog.showErrorBox(
-                                        "Repair Equicord failed",
-                                        `Could not download Equicord:\n\n${err instanceof Error ? err.message : String(err)}`
+                                        "Repair Supercord failed",
+                                        `Could not download Supercord:\n\n${err instanceof Error ? err.message : String(err)}`
                                     );
                                 });
                             break;
@@ -336,15 +336,15 @@ export async function initTray(win: BrowserWindow, setIsQuitting: (val: boolean)
         },
         { type: "separator" },
         {
-            label: "Repair Equicord",
+            label: "Repair Supercord",
             async click() {
                 try {
                     await downloadVencordAsar();
                 } catch (err) {
-                    console.error("[Tray] Repair Equicord failed:", err);
+                    console.error("[Tray] Repair Supercord failed:", err);
                     dialog.showErrorBox(
-                        "Repair Equicord failed",
-                        `Could not download Equicord:\n\n${err instanceof Error ? err.message : String(err)}`
+                        "Repair Supercord failed",
+                        `Could not download Supercord:\n\n${err instanceof Error ? err.message : String(err)}`
                     );
                     return;
                 }

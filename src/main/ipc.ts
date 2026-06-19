@@ -73,6 +73,11 @@ handleSync(
 handleSync(IpcEvents.AUTOSTART_ENABLED, () => autoStart.isEnabled());
 handle(IpcEvents.ENABLE_AUTOSTART, autoStart.enable);
 handle(IpcEvents.DISABLE_AUTOSTART, autoStart.disable);
+handle(IpcEvents.TOGGLE_CONTENT_PROTECTION, (_e, enabled: boolean) => {
+    if (mainWin && !mainWin.isDestroyed()) {
+        mainWin.setContentProtection(enabled);
+    }
+});
 
 handle(IpcEvents.ARRPC_OPEN_SETTINGS, () => {
     createArRPCWindow();
@@ -101,15 +106,15 @@ handle(IpcEvents.RELAUNCH, async () => {
     app.exit();
 });
 
-handleSync(IpcEvents.IS_USING_CUSTOM_VENCORD_DIR, () => !!State.store.equicordDir);
+handleSync(IpcEvents.IS_USING_CUSTOM_VENCORD_DIR, () => !!State.store.supercordDir);
 handle(IpcEvents.SHOW_CUSTOM_VENCORD_DIR, async () => {
-    const { equicordDir } = State.store;
-    if (!equicordDir) return;
+    const { supercordDir } = State.store;
+    if (!supercordDir) return;
 
-    const stats = await stat(equicordDir);
+    const stats = await stat(supercordDir);
     if (!stats.isDirectory()) return;
 
-    shell.openPath(equicordDir);
+    shell.openPath(supercordDir);
 });
 
 function getWindow(e: IpcMainInvokeEvent, key?: string) {
@@ -152,7 +157,7 @@ handle(IpcEvents.SPELLCHECK_ADD_TO_DICTIONARY, (e, word: string) => {
 
 handle(IpcEvents.SELECT_VENCORD_DIR, async (_e, value?: null) => {
     if (value === null) {
-        delete State.store.equicordDir;
+        delete State.store.supercordDir;
         return "ok";
     }
 
@@ -164,7 +169,7 @@ handle(IpcEvents.SELECT_VENCORD_DIR, async (_e, value?: null) => {
     const dir = res.filePaths[0];
     if (!isValidVencordInstall(dir)) return "invalid";
 
-    State.store.equicordDir = dir;
+    State.store.supercordDir = dir;
 
     return "ok";
 });

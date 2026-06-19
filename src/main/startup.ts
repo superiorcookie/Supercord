@@ -22,7 +22,7 @@ import { isDeckGameMode } from "./utils/steamOS";
 
 console.log("Equibop v" + app.getVersion());
 
-process.env.EQUICORD_USER_DATA_DIR = DATA_DIR;
+process.env.SUPERCORD_USER_DATA_DIR = DATA_DIR;
 
 const isLinux = process.platform === "linux";
 
@@ -116,7 +116,7 @@ function init() {
     if (isDeckGameMode) nativeTheme.themeSource = "dark";
 
     app.whenReady().then(async () => {
-        if (process.platform === "win32") app.setAppUserModelId("org.equicord.equibop");
+        if (process.platform === "win32") app.setAppUserModelId("org.supercord.equibop");
 
         registerScreenShareHandler();
         registerMediaPermissionsHandler();

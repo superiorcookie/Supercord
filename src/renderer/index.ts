@@ -30,7 +30,7 @@ VesktopLogger.log(`Equibop v${VesktopNative.app.getVersion()}`);
 const { customEntries, customSections } = Vencord.Plugins.plugins.Settings as any as typeof SettingsPlugin;
 
 customEntries.push({
-    key: "equicord_equibop_settings",
+    key: "supercord_equibop_settings",
     title: "Equibop Settings",
     Component: SettingsUi,
     Icon: VesktopSettingsIcon

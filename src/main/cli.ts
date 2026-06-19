@@ -83,7 +83,7 @@ const options = {
     repair: {
         type: "boolean",
         short: "r",
-        description: "Re-download Equicord and restart"
+        description: "Re-download Supercord and restart"
     }
 } satisfies Record<string, Option>;
 
@@ -123,12 +123,12 @@ export async function checkCommandLineForRepair() {
     if (!repair) return false;
 
     const { State } = await import("./settings");
-    if (State.store.equicordDir) {
-        console.error("Cannot repair: using custom Equicord directory. Remove it in settings first.");
+    if (State.store.supercordDir) {
+        console.error("Cannot repair: using custom Supercord directory. Remove it in settings first.");
         process.exit(1);
     }
 
-    console.log("Repairing Equicord...");
+    console.log("Repairing Supercord...");
     const { downloadVencordAsar } = await import("./utils/vencordLoader");
     await downloadVencordAsar();
     console.log("Repair complete.");

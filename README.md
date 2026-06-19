@@ -1,15 +1,15 @@
-# Equibop [<img src="/static/icon.png" width="225" align="right" alt="Equibop">](https://github.com/Equicord/Equibop)
+# Equibop [<img src="/static/icon.png" width="225" align="right" alt="Equibop">](https://github.com/Supercord/Equibop)
 
-[![Equicord](https://img.shields.io/badge/Equicord-grey?style=flat)](https://github.com/Equicord/Equicord)
-[![Tests](https://github.com/Equicord/Equibop/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equibop/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://equicord.org/discord)
+[![Supercord](https://img.shields.io/badge/Supercord-grey?style=flat)](https://github.com/Supercord/Supercord)
+[![Tests](https://github.com/Supercord/Equibop/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Supercord/Equibop/actions/workflows/test.yml)
+[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://supercord.org/discord)
 
 Equibop is a fork of [Vesktop](https://github.com/Vencord/Vesktop).
 
-You can join our [discord server](https://equicord.org/discord) for commits, changes, chat or even support.<br></br>
+You can join our [discord server](https://supercord.org/discord) for commits, changes, chat or even support.<br></br>
 
 **Main features**:
-- Equicord preinstalled
+- Supercord preinstalled
 - Much more lightweight and faster than the official Discord app
 - Linux Screenshare with sound & wayland
 - Much better privacy, since Discord has no access to your system
@@ -18,7 +18,7 @@ You can join our [discord server](https://equicord.org/discord) for commits, cha
 
 - Tray Customization with voice detection and notification badges
 - Command-line flags to toggle microphone and deafen status (Linux)
-- Custom Arguments from [this PR](https://github.com/Equicord/Equibop/pull/46)
+- Custom Arguments from [this PR](https://github.com/Supercord/Equibop/pull/46)
 - arRPC-bun with debug logging support https://github.com/Creationsss/arrpc-bun
 
 **Not fully Supported**:
@@ -47,7 +47,7 @@ You can join our [discord server](https://equicord.org/discord) for commits, cha
 Add flags to `${XDG_CONFIG_HOME}/equibop-flags.conf` — one per line, lines starting with `#` are comments.
 
 ## Installing
-Check the [Releases](https://github.com/Equicord/Equibop/releases) page
+Check the [Releases](https://github.com/Supercord/Equibop/releases) page
 
 OR
 
@@ -57,7 +57,7 @@ Check The Downloads from the [website](https://equibop.org/install)
 
 [![Equibop](https://img.shields.io/badge/AVAILABLE_ON_THE_AUR-333232?style=for-the-badge&logo=arch-linux&logoColor=0F94D2&labelColor=%23171717)](https://aur.archlinux.org/packages?O=0&K=equibop)
 <br>
-<!-- <a href="https://flathub.org/apps/io.github.equicord.equibop">
+<!-- <a href="https://flathub.org/apps/io.github.supercord.equibop">
   <img src="https://flathub.org/api/badge?svg" alt="Download on Flathub" style="width:220px; height:auto;">
 </a> -->
 
@@ -78,7 +78,7 @@ You need to have the following dependencies installed:
 Packaging will create builds in the dist/ folder
 
 ```sh
-git clone https://github.com/Equicord/Equibop
+git clone https://github.com/Supercord/Equibop
 cd Equibop
 
 # Install Dependencies

@@ -5,9 +5,9 @@
     "private": true,
     "description": "Equibop is a custom Discord desktop app",
     "keywords": [],
-    "homepage": "https://equicord.org",
+    "homepage": "https://supercord.org",
     "license": "GPL-3.0-or-later",
-    "author": "Equicord <contact@equicord.org>",
+    "author": "Supercord <contact@supercord.org>",
     "main": "dist/js/main.js",
     "scripts": {
         "build": "bun run scripts/build/build.mts",
@@ -18,8 +18,8 @@
         "package:dir": "bun run build && electron-builder --dir",
         "lint": "eslint",
         "lint:fix": "bun lint --fix",
-        "start": "bun run build && electron .",
-        "start:dev": "bun run build:dev && electron .",
+        "start": "cd Supercord-core && pnpm install && pnpm build && cd .. && bun run build && electron .",
+        "start:dev": "cd Supercord-core && pnpm install && pnpm build && cd .. && bun run build:dev && electron .",
         "start:watch": "bun run build:dev && bun run scripts/startWatch.mts",
         "test": "bun lint && bun testTypes",
         "testTypes": "tsc --noEmit",
@@ -71,7 +71,7 @@
         "bun": ">=1.3.0"
     },
     "build": {
-        "appId": "org.equicord.equibop",
+        "appId": "org.supercord.equibop",
         "productName": "Equibop",
         "executableName": "equibop",
         "files": [
@@ -93,7 +93,7 @@
         "linux": {
             "icon": "build/icon.svg",
             "category": "Network",
-            "maintainer": "contact@equicord.org",
+            "maintainer": "contact@supercord.org",
             "target": [
                 {
                     "target": "deb",

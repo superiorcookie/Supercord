@@ -36,8 +36,8 @@ function openDeveloperOptionsModal(settings: Settings) {
 
             <ModalContent>
                 <div style={{ padding: "1em 0" }}>
-                    <Heading tag="h5">Equicord Location</Heading>
-                    <EquicordLocationPicker settings={settings} />
+                    <Heading tag="h5">Supercord Location</Heading>
+                    <SupercordLocationPicker settings={settings} />
 
                     <Heading tag="h5" className={Margins.top16}>
                         Debugging
@@ -54,15 +54,15 @@ function openDeveloperOptionsModal(settings: Settings) {
     ));
 }
 
-const EquicordLocationPicker: SettingsComponent = ({ settings }) => {
+const SupercordLocationPicker: SettingsComponent = ({ settings }) => {
     const forceUpdate = useForceUpdater();
-    const usingCustomEquicordDir = VesktopNative.fileManager.isUsingCustomVencordDir();
+    const usingCustomSupercordDir = VesktopNative.fileManager.isUsingCustomVencordDir();
 
     return (
         <>
             <Paragraph>
-                Equicord files are loaded from{" "}
-                {usingCustomEquicordDir ? (
+                Supercord files are loaded from{" "}
+                {usingCustomSupercordDir ? (
                     <TextButton
                         variant="link"
                         onClick={e => {
@@ -80,13 +80,13 @@ const EquicordLocationPicker: SettingsComponent = ({ settings }) => {
                 <Button
                     size={"small"}
                     onClick={async () => {
-                        const choice = await VesktopNative.fileManager.selectEquicordDir();
+                        const choice = await VesktopNative.fileManager.selectSupercordDir();
                         switch (choice) {
                             case "cancelled":
                                 break;
                             case "ok":
                                 Toasts.show({
-                                    message: "Equicord install changed. Fully restart Equibop to apply.",
+                                    message: "Supercord install changed. Fully restart Equibop to apply.",
                                     id: Toasts.genId(),
                                     type: Toasts.Type.SUCCESS
                                 });
@@ -94,7 +94,7 @@ const EquicordLocationPicker: SettingsComponent = ({ settings }) => {
                             case "invalid":
                                 Toasts.show({
                                     message:
-                                        "You did not choose a valid Equicord install. Make sure you're selecting the dist dir!",
+                                        "You did not choose a valid Supercord install. Make sure you're selecting the dist dir!",
                                     id: Toasts.genId(),
                                     type: Toasts.Type.FAILURE
                                 });
@@ -109,7 +109,7 @@ const EquicordLocationPicker: SettingsComponent = ({ settings }) => {
                     size={"small"}
                     variant="dangerPrimary"
                     onClick={async () => {
-                        await VesktopNative.fileManager.selectEquicordDir(null);
+                        await VesktopNative.fileManager.selectSupercordDir(null);
                         forceUpdate();
                     }}
                 >
