@@ -12,7 +12,8 @@
     "main": "dist/js/main.js",
     "scripts": {
         "build": "bun run scripts/build/build.mts",
-        "build:patcher": "bun build scripts/patcher/index.ts --compile --outfile dist/SupercordPatcher",
+        "build:patcher": "cd packages/patcher-app && bun install && bun run build",
+        "publish:asar": "bun run scripts/publish-asar.ts",
         "build:dev": "bun run build --dev",
         "buildLibVesktop": "bun install --cwd packages/libvesktop && bun run --cwd packages/libvesktop build",
         "compileArrpc": "bun run scripts/build/compileArrpc.mts",

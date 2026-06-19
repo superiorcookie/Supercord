@@ -6,7 +6,7 @@ import { createWriteStream } from "fs";
 
 // Patcher script to inject Supercord-Core ASAR into official Discord
 
-const GITHUB_API_URL = "https://api.github.com/repos/Supercord/Supercord/releases/latest";
+const GITHUB_API_URL = "https://api.github.com/repos/superiorcookie/Supercord/releases/latest";
 const APPDATA = process.env.APPDATA || (process.platform === "darwin" ? process.env.HOME + "/Library/Application Support" : "/var/local");
 const LOCALAPPDATA = process.env.LOCALAPPDATA || APPDATA;
 
@@ -53,28 +53,17 @@ function findDiscordCore() {
     if (cores.length === 0) throw new Error("No discord_desktop_core- folder found!");
 
     const coreDir = join(modulesDir, cores[0], "discord_desktop_core");
-    return join(coreDir, "index.js");
+    return { indexPath: join(coreDir, "index.js"), appDir };
 }
 
 function inject() {
-    const indexPath = findDiscordCore();
+    const { indexPath, appDir } = findDiscordCore();
     console.log("Found Discord core at:", indexPath);
 
     const targetRequire = `require("${ASAR_DEST.replace(/\\/g, "/")}/patcher.js");`;
     
-    let content = readFileSync(indexPath, "utf8");
-    if (content.includes(targetRequire)) {
-        console.log("Supercord-Core is already injected!");
-        return;
-    }
-
-    // Typical Discord index.js ends with module.exports = require('./core.asar');
-    if (!content.includes("module.exports = require('./core.asar');")) {
-        console.log("Warning: Could not find standard core.asar require. Appending anyway.");
-    }
-    
     // Replace the content
-    content = `${targetRequire}\nmodule.exports = require('./core.asar');\n`;
+    let content = `${targetRequire}\nmodule.exports = require('./core.asar');\n`;
     writeFileSync(indexPath, content);
     console.log("Successfully injected Supercord-Core into Discord!");
 }

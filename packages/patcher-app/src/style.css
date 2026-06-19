@@ -1,0 +1,240 @@
+:root {
+  --bg-color: #09090b;
+  --surface: rgba(24, 24, 27, 0.6);
+  --primary: #9333ea;
+  --primary-hover: #a855f7;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.1);
+  --success: #10b981;
+  --error: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: transparent;
+  color: var(--text-main);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+.titlebar {
+  height: 32px;
+  display: flex;
+  justify-content: flex-end;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.drag-region {
+  flex-grow: 1;
+  -webkit-app-region: drag;
+}
+
+.window-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.win-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 46px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.win-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.win-btn.close:hover {
+  background: #e81123;
+  color: white;
+}
+
+.win-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+.container {
+  height: 100vh;
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glow-orb {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.4) 0%, rgba(0, 0, 0, 0) 70%);
+  top: -100px;
+  right: -100px;
+  filter: blur(40px);
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.header {
+  text-align: center;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 20px rgba(147, 51, 234, 0.5));
+  animation: float 6s ease-in-out infinite;
+}
+
+h1 {
+  font-weight: 800;
+  font-size: 32px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #fff 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.action-area {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.patch-btn {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  width: 100%;
+  backdrop-filter: blur(10px);
+}
+
+.patch-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary) 0%, transparent 100%);
+  opacity: 0.1;
+  transition: opacity 0.3s;
+}
+
+.patch-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 10px 20px -10px var(--primary);
+}
+
+.patch-btn:hover::before {
+  opacity: 0.3;
+}
+
+.patch-btn:active {
+  transform: translateY(0);
+}
+
+.patch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+.status-container {
+  width: 100%;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.status-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--surface);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), #d946ef);
+  border-radius: 3px;
+  transition: width 0.3s ease, background-color 0.3s;
+}
+
+.status-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 400;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}

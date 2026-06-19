@@ -1,0 +1,26 @@
+{
+  "name": "supercord-patcher",
+  "version": "1.0.0",
+  "description": "Supercord GUI Patcher",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "org.supercord.patcher",
+    "productName": "Supercord Patcher",
+    "directories": {
+      "output": "../../dist/patcher-build"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "build/icon.ico"
+    }
+  }
+}

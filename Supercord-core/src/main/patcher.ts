@@ -26,18 +26,7 @@ import { IS_VANILLA } from "./utils/constants";
 
 console.log("[Supercord] Starting up...");
 
-// Our injector file at app/index.js
-const injectorPath = require.main!.filename;
 
-// The original app.asar
-const asarPath = join(dirname(injectorPath), "..", "_app.asar");
-
-const discordPkg = require(join(asarPath, "package.json"));
-require.main!.filename = join(asarPath, discordPkg.main);
-if (IS_VESKTOP || IS_EQUIBOP) require.main!.filename = join(dirname(injectorPath), "..", "..", "package.json");
-
-// @ts-expect-error Untyped method? Dies from cringe
-app.setAppPath(asarPath);
 
 if (!IS_VANILLA) {
     const settings = RendererSettings.store;
@@ -181,5 +170,3 @@ if (!IS_VANILLA) {
     console.log("[Supercord] Running in vanilla mode. Not loading Supercord");
 }
 
-console.log("[Supercord] Loading original Discord app.asar");
-require(require.main!.filename);
