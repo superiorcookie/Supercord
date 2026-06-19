@@ -236,7 +236,8 @@ await Promise.all([
     writeFile("dist/equibop/package.json", JSON.stringify({
         name: "equicord",
         main: "main.js"
-    }))
+    })),
+    writeFile("dist/patcher.js", 'require("./desktop/patcher.js");')
 ]);
 
 await Promise.all([

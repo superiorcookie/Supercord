@@ -28,3 +28,16 @@ jobs:
         run: bun run build && bunx electron-builder --publish always
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Supercord-core and Patcher
+        run: |
+          cd Supercord-core
+          npm install
+          npm run build
+          cd ..
+          bun run build:patcher
+
+      - name: Upload additional assets to Release
+        run: gh release upload ${{ github.ref_name }} Supercord-core/dist/desktop.asar dist/SupercordPatcher.exe --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

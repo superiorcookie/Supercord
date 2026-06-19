@@ -108,6 +108,13 @@ ipcMain.handle(IpcEvents.GET_THEME_SYSTEM_VALUES, () => {
 ipcMain.handle(IpcEvents.OPEN_THEMES_FOLDER, () => shell.openPath(THEMES_DIR));
 ipcMain.handle(IpcEvents.OPEN_SETTINGS_FOLDER, () => shell.openPath(SETTINGS_DIR));
 
+ipcMain.handle(IpcEvents.TOGGLE_CONTENT_PROTECTION, (e, enabled: boolean) => {
+    const window = BrowserWindow.fromWebContents(e.sender);
+    if (window) {
+        window.setContentProtection(enabled);
+    }
+});
+
 ipcMain.handle(IpcEvents.INIT_FILE_WATCHERS, ({ sender }) => {
     let quickCssWatcher: FSWatcher | undefined;
     let rendererCssWatcher: FSWatcher | undefined;

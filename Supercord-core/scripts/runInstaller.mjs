@@ -25,9 +25,9 @@ import { Readable } from "stream";
 import { finished } from "stream/promises";
 import { fileURLToPath } from "url";
 
-const BASE_URL = "https://github.com/Supercord/Equilotl/releases/latest/download/";
-const INSTALLER_PATH_DARWIN = "Equilotl.app/Contents/MacOS/Equilotl";
-const INSTALLER_APP_DARWIN = "Equilotl.app";
+const BASE_URL = "https://github.com/Vencord/Installer/releases/latest/download/";
+const INSTALLER_PATH_DARWIN = "VencordInstaller.app/Contents/MacOS/VencordInstaller";
+const INSTALLER_APP_DARWIN = "VencordInstaller.app";
 
 const BASE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILE_DIR = join(BASE_DIR, "dist", "Installer");
@@ -36,18 +36,18 @@ const ETAG_FILE = join(FILE_DIR, "etag.txt");
 function getFilename() {
     switch (process.platform) {
         case "win32":
-            return "EquilotlCli.exe";
+            return "VencordInstallerCli.exe";
         case "darwin":
             switch (process.arch) {
                 case "x64":
-                    return "Equilotl-darwin-x64.zip";
+                    return "VencordInstaller-darwin-x64.zip";
                 case "arm64":
-                    return "Equilotl-darwin-arm64.zip";
+                    return "VencordInstaller-darwin-arm64.zip";
                 default:
                     throw new Error("Unsupported macOS architecture: " + process.arch);
             }
         case "linux":
-            return "EquilotlCli-linux";
+            return "VencordInstallerCli-linux";
         default:
             throw new Error("Unsupported platform: " + process.platform);
     }
@@ -133,9 +133,9 @@ try {
         stdio: "inherit",
         env: {
             ...process.env,
-            SUPERCORD_USER_DATA_DIR: BASE_DIR,
-            SUPERCORD_DIRECTORY: join(BASE_DIR, "dist/desktop"),
-            SUPERCORD_DEV_INSTALL: "1"
+            VENCORD_USER_DATA_DIR: BASE_DIR,
+            VENCORD_DIRECTORY: join(BASE_DIR, "dist/desktop"),
+            VENCORD_DEV_INSTALL: "1"
         }
     });
 } catch {

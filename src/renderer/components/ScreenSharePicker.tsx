@@ -336,12 +336,17 @@ function OptionRadio<Settings extends object, Key extends keyof Settings>(props:
     return (
         <div className={cl("option-radios")}>
             {(options as string[]).map((option, idx) => (
-                <label className={cl("option-radio")} data-checked={settings[settingsKey] === option} key={option}>
+                <label
+                    className={cl("option-radio")}
+                    data-checked={settings[settingsKey] === option}
+                    key={option}
+                    onClick={() => onChange(option)}
+                >
                     <Span weight="bold">{labels?.[idx] ?? option}</Span>
                     <input
                         className={cl("option-input")}
                         type="radio"
-                        name="fps"
+                        name={String(settingsKey)}
                         value={option}
                         checked={settings[settingsKey] === option}
                         onChange={() => onChange(option)}
