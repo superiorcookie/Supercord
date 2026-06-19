@@ -1,0 +1,7 @@
+.privacy-button {
+    order: -1;
+}
+
+.privacy-button-active {
+    color: var(--status-danger, #ed4245);
+}
