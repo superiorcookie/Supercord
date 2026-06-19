@@ -26,6 +26,7 @@ import { coreStyleRootNode, managedStyleRootNode, userStyleRootNode, vencordRoot
 let style: HTMLStyleElement;
 let themesStyle: HTMLStyleElement;
 let oldUIStyle: HTMLStyleElement;
+let reduceAnimationsStyle: HTMLStyleElement;
 
 function getThemeActivationMode(themeId: string) {
     return Settings.themeActivationModes?.[themeId] ?? "always";
@@ -78,6 +79,22 @@ function toggleOldUI(isEnabled: boolean) {
         `;
     }
     oldUIStyle.disabled = !isEnabled;
+    updatePopoutWindows();
+}
+
+function toggleReduceAnimations(isEnabled: boolean) {
+    if (!reduceAnimationsStyle) {
+        reduceAnimationsStyle = createAndAppendStyle("supercord-reduce-animations", userStyleRootNode);
+        reduceAnimationsStyle.textContent = `
+*, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+        `;
+    }
+    reduceAnimationsStyle.disabled = !isEnabled;
     updatePopoutWindows();
 }
 
@@ -169,6 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     toggleOldUI(Settings.revertOldUI);
     SettingsStore.addChangeListener("revertOldUI", toggleOldUI);
+
+    toggleReduceAnimations(Settings.reduceAnimations);
+    SettingsStore.addChangeListener("reduceAnimations", toggleReduceAnimations);
 
     SettingsStore.addChangeListener("enabledThemeLinks", initThemes);
     SettingsStore.addChangeListener("enabledThemes", initThemes);

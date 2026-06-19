@@ -44,6 +44,8 @@ export interface Settings {
     autoUpdateNotification: boolean;
     useQuickCss: boolean;
     revertOldUI: boolean;
+    reduceAnimations: boolean;
+    performanceMode: boolean;
     eagerPatches: boolean;
     enabledThemes: string[];
     enabledThemeLinks: string[];
@@ -115,6 +117,8 @@ const DefaultSettings: Settings = {
     autoUpdateNotification: true,
     useQuickCss: true,
     revertOldUI: false,
+    reduceAnimations: false,
+    performanceMode: false,
     themeLinks: [],
     eagerPatches: false, // Eagerly patching no longer works due to module factories with the same id being able to have different sources now.
     enabledThemes: [],

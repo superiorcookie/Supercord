@@ -49,7 +49,7 @@ type KeysOfType<Object, Type> = {
 }[keyof Object];
 
 function Switches() {
-    const settings = useSettings(["useQuickCss", "revertOldUI", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize"]);
+    const settings = useSettings(["useQuickCss", "revertOldUI", "reduceAnimations", "performanceMode", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize"]);
 
     const Switches = [
         {
@@ -61,6 +61,17 @@ function Switches() {
             key: "revertOldUI",
             title: "Revert to old Discord UI",
             description: "Restores Discord's 2020 UI using the OldCord theme.",
+        },
+        {
+            key: "reduceAnimations",
+            title: "Reduce all Discord animations",
+            description: "Disables all UI animations and transitions for a snappier feel.",
+        },
+        {
+            key: "performanceMode",
+            title: "Performance Mode",
+            description: "Aggressively optimizes RAM and CPU usage. Disables some background tasks. Requires a restart to apply.",
+            restartNeeded: true
         },
         !IS_WEB && {
             key: "enableReactDevtools",

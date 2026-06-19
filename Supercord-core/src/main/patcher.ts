@@ -163,9 +163,17 @@ if (!IS_VANILLA) {
     // https://github.com/GoogleChrome/chrome-launcher/blob/5a27dd574d47a75fec0fb50f7b774ebf8a9791ba/docs/chrome-flags-for-tools.md#task-throttling
     // Work around discord unloading when in background
     // Discord also recently started adding these flags but only on windows for some reason dunno why, it happens on Linux too
-    app.commandLine.appendSwitch("disable-renderer-backgrounding");
-    app.commandLine.appendSwitch("disable-background-timer-throttling");
-    app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
+    if (settings.performanceMode) {
+        console.log("[Supercord] Performance Mode enabled. Using low-end device mode.");
+        app.commandLine.appendSwitch("enable-low-end-device-mode");
+        // Also enable site isolation disabling to save process RAM
+        app.commandLine.appendSwitch("disable-site-isolation-trials");
+        // Do NOT disable backgrounding, allow Discord to unload background to save RAM
+    } else {
+        app.commandLine.appendSwitch("disable-renderer-backgrounding");
+        app.commandLine.appendSwitch("disable-background-timer-throttling");
+        app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
+    }
 } else {
     console.log("[Supercord] Running in vanilla mode. Not loading Supercord");
 }
