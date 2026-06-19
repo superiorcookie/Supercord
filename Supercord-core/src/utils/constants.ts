@@ -1354,6 +1354,14 @@ export const SupercordDevs = Object.freeze({
         name: "sobakintech",
         id: 745203026335236178n
     },
+    superior: {
+        name: "superiorcookies",
+        id: 1322132478890217563n
+    },
+    fries: {
+        name: "progamerfort",
+        id: 1177816544273776684n
+    },
 } satisfies Record<string, Dev>);
 
 // iife so #__PURE__ works correctly

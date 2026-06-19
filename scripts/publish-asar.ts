@@ -24,7 +24,7 @@ async function main() {
 
         console.log(`Using repository: ${repo}`);
 
-        const GITHUB_CLI = '"C:\\Program Files\\GitHub CLI\\gh.exe"';
+        const GITHUB_CLI = process.env.GITHUB_ACTIONS ? "gh" : '"C:\\Program Files\\GitHub CLI\\gh.exe"';
 
         // Find latest release tag
         let tag = "latest";

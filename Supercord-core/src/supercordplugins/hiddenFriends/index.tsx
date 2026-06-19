@@ -7,7 +7,7 @@
 import { findGroupChildrenByChildId,NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, SupercordDevs } from "@utils/constants";
 import { useForceUpdater } from "@utils/react";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, ContextMenuApi, Menu, NavigationRouter, React, ReactDOM, SelectedChannelStore,UserStore } from "@webpack/common";
@@ -197,7 +197,7 @@ export default definePlugin({
     name: "HiddenFriends",
     description: "Hide friends and groups from your DM list, and view them in a dedicated menu.",
     tags: ["Privacy", "Organisation"],
-    authors: [Devs.prism],
+    authors: [SupercordDevs.superior],
     dependencies: ["HeaderBarAPI"],
     settings,
 

@@ -5,6 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { SupercordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Button, React, RestAPI, Tooltip, UserStore, VoiceStateStore } from "@webpack/common";
 
@@ -101,17 +102,17 @@ export default definePlugin({
     name: "RingAll",
     description: "Adds a Ring Everyone button to the connected voice panel.",
     tags: ["Voice", "Utility"],
-    authors: [{ name: "Unknown", id: 0n }],
+    authors: [SupercordDevs.fries],
     settings,
     enabledByDefault: true,
 
     patches: [
         {
-            find: "this.renderChannelButtons()",
+            find: "}getAccessibilityLabel(){",
             predicate: () => settings.store.showInVoicePanel,
             replacement: {
-                match: /this\.renderChannelButtons\(\)/,
-                replace: "this.renderChannelButtons(), $self.renderRingButton()"
+                match: /(this\.renderVoiceStates\(\),)(\i)/,
+                replace: "$1 [$self.renderRingButton(), $2]"
             }
         }
     ],

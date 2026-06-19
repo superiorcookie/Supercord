@@ -8,7 +8,7 @@ import "./style.css";
 
 import { ChannelToolbarButtonProps,HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, SupercordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -52,7 +52,7 @@ export default definePlugin({
     name: "PrivacyScreen",
     description: "Adds a button to the top toolbar to toggle a privacy screen for screensharing.",
     tags: ["Privacy", "Shortcuts"],
-    authors: [Devs.prism],
+    authors: [SupercordDevs.superior],
     dependencies: ["UserSettingsAPI", "HeaderBarAPI"],
     settings,
 
