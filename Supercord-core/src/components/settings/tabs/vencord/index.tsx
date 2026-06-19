@@ -49,13 +49,18 @@ type KeysOfType<Object, Type> = {
 }[keyof Object];
 
 function Switches() {
-    const settings = useSettings(["useQuickCss", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize"]);
+    const settings = useSettings(["useQuickCss", "revertOldUI", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize"]);
 
     const Switches = [
         {
             key: "useQuickCss",
             title: "Enable Custom CSS",
             description: "Load custom CSS from the QuickCSS editor. This allows you to customize Discord's appearance with your own styles.",
+        },
+        {
+            key: "revertOldUI",
+            title: "Revert to old Discord UI",
+            description: "Restores Discord's 2020 UI using the OldCord theme.",
         },
         !IS_WEB && {
             key: "enableReactDevtools",

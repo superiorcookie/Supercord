@@ -25,6 +25,7 @@ import { coreStyleRootNode, managedStyleRootNode, userStyleRootNode, vencordRoot
 
 let style: HTMLStyleElement;
 let themesStyle: HTMLStyleElement;
+let oldUIStyle: HTMLStyleElement;
 
 function getThemeActivationMode(themeId: string) {
     return Settings.themeActivationModes?.[themeId] ?? "always";
@@ -51,6 +52,35 @@ async function toggle(isEnabled: boolean) {
     } else
         style.disabled = !isEnabled;
 }
+
+function toggleOldUI(isEnabled: boolean) {
+    if (!oldUIStyle) {
+        oldUIStyle = createAndAppendStyle("supercord-old-ui", userStyleRootNode);
+        oldUIStyle.textContent = `
+/**
+ * @name OldCord
+ * @version 2.1
+ * @author milbit, kinggamingyt
+ * @source https://github.com/milbits/oldcord
+ * @website https://github.com/milbits/oldcord
+ * @description Restores discord's 2020 UI
+ */
+
+/* Everything in one */
+@import url("https://milbits.github.io/oldcord/src/main.css");
+
+:root{
+ --oldcord-tint: 210; /*Light mode tint. Has to be hue in HSL*/
+ --oldcord-tint-intensity: 11.11; /*Tint intensity/Saturation. 0 for grayscale, 10000 for an awesome party*/
+ 
+ --reaction-animation: 0; /*animation when someone reacts. 0 off 1 on. buggy.*/
+}
+        `;
+    }
+    oldUIStyle.disabled = !isEnabled;
+    updatePopoutWindows();
+}
+
 
 async function initThemes() {
     themesStyle ??= createAndAppendStyle("vencord-themes", userStyleRootNode);
@@ -136,6 +166,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     toggle(Settings.useQuickCss);
     SettingsStore.addChangeListener("useQuickCss", toggle);
+
+    toggleOldUI(Settings.revertOldUI);
+    SettingsStore.addChangeListener("revertOldUI", toggleOldUI);
 
     SettingsStore.addChangeListener("enabledThemeLinks", initThemes);
     SettingsStore.addChangeListener("enabledThemes", initThemes);
