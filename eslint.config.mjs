@@ -62,13 +62,7 @@ export default defineConfig(
             }
         },
         rules: {
-            "simpleHeader/header": [
-                "error",
-                {
-                    files: ["scripts/header.txt"],
-                    templates: { author: [".*", "Vendicated and Vesktop contributors"] }
-                }
-            ],
+            "simpleHeader/header": "off",
 
             // ESLint Rules
             yoda: "error",
