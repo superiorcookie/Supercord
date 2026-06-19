@@ -34,8 +34,8 @@ jobs:
         run: |
           cd Supercord-core
           npm install -g pnpm
-          bun install
-          bun run build
+          pnpm install
+          pnpm run build
           cd ..
           bun run build:patcher
 
