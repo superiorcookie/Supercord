@@ -145,6 +145,47 @@ export function openScreenSharePicker(screens: Source[], skipPicker: boolean) {
     });
 }
 
+type TabType = "applications" | "screens" | "devices";
+
+function MonitorIcon() {
+    return (
+        <svg className={cl("tab-icon")} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M4 2.5C2.897 2.5 2 3.397 2 4.5V15.5C2 16.603 2.897 17.5 4 17.5H11V19.5H7V21.5H17V19.5H13V17.5H20C21.103 17.5 22 16.603 22 15.5V4.5C22 3.397 21.103 2.5 20 2.5H4ZM20 4.5V13.5H4V4.5H20Z" />
+        </svg>
+    );
+}
+
+function WindowIcon() {
+    return (
+        <svg className={cl("tab-icon")} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M4 3C2.897 3 2 3.897 2 5V19C2 20.103 2.897 21 4 21H20C21.103 21 22 20.103 22 19V5C22 3.897 21.103 3 20 3H4ZM4 7H20V19H4V7Z" />
+        </svg>
+    );
+}
+
+function DeviceIcon() {
+    return (
+        <svg className={cl("tab-icon")} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 2H8C6.897 2 6 2.897 6 4V20C6 21.103 6.897 22 8 22H16C17.103 22 18 21.103 18 20V4C18 2.897 17.103 2 16 2ZM12 20C11.447 20 11 19.553 11 19C11 18.447 11.447 18 12 18C12.553 18 13 18.447 13 19C13 19.553 12.553 20 12 20ZM16 17H8V5H16V17Z" />
+        </svg>
+    );
+}
+
+function ScreenNameIcon({ isScreen }: { isScreen: boolean }) {
+    if (isScreen) {
+        return (
+            <svg className={cl("screen-name-icon")} viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 2.5C2.897 2.5 2 3.397 2 4.5V15.5C2 16.603 2.897 17.5 4 17.5H11V19.5H7V21.5H17V19.5H13V17.5H20C21.103 17.5 22 16.603 22 15.5V4.5C22 3.397 21.103 2.5 20 2.5H4ZM20 4.5V13.5H4V4.5H20Z" />
+            </svg>
+        );
+    }
+    return (
+        <svg className={cl("screen-name-icon")} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M4 3C2.897 3 2 3.897 2 5V19C2 20.103 2.897 21 4 21H20C21.103 21 22 20.103 22 19V5C22 3.897 21.103 3 20 3H4ZM4 7H20V19H4V7Z" />
+        </svg>
+    );
+}
+
 function ScreenPicker({ screens, chooseScreen }: { screens: Source[]; chooseScreen: (id: string) => void }) {
     return (
         <div className={cl("screen-grid")}>
@@ -159,7 +200,10 @@ function ScreenPicker({ screens, chooseScreen }: { screens: Source[]; chooseScre
                     />
 
                     <img src={url} alt="" />
-                    <Paragraph className={cl("screen-name")}>{name}</Paragraph>
+                    <Paragraph className={cl("screen-name")}>
+                        <ScreenNameIcon isScreen={id.startsWith("screen:")} />
+                        {name}
+                    </Paragraph>
                 </label>
             ))}
         </div>
@@ -308,29 +352,22 @@ function OptionRadio<Settings extends object, Key extends keyof Settings>(props:
     );
 }
 
-function StreamSettingsUi({
-    source,
+function StreamSettingsModal({
+    modalProps,
+    close,
     settings,
     setSettings,
-    skipPicker
+    qualitySettings
 }: {
-    source: Source;
+    modalProps: any;
+    close: () => void;
     settings: StreamSettings;
     setSettings: Dispatch<SetStateAction<StreamSettings>>;
-    skipPicker: boolean;
+    qualitySettings: any;
 }) {
     const Settings = useSettings();
-    const qualitySettings = State.store.screenshareQuality!;
 
-    const [thumb] = useAwaiter(
-        () => (skipPicker ? Promise.resolve(source.url) : VesktopNative.capturer.getLargeThumbnail(source.id)),
-        {
-            fallbackValue: source.url,
-            deps: [source.id]
-        }
-    );
-
-    const openSettings = () => {
+    const openAudioSettings = () => {
         openModal(props => (
             <AudioSettingsModal
                 modalProps={props}
@@ -343,79 +380,85 @@ function StreamSettingsUi({
     };
 
     return (
-        <div>
-            <HeadingTertiary className={Margins.bottom8}>What you're streaming</HeadingTertiary>
-            <Card className={cl("card", "preview")}>
-                <img src={thumb} alt="" className={cl(isLinux ? "preview-img-linux" : "preview-img")} />
-                <Paragraph>{source.name}</Paragraph>
-            </Card>
+        <Modals.ModalRoot {...modalProps} size={ModalSize.MEDIUM}>
+            <Modals.ModalHeader className={cl("header")}>
+                <BaseText size="lg" weight="semibold" tag="h3" style={{ flexGrow: 1 }}>
+                    Stream Settings
+                </BaseText>
+                <ModalCloseButton onClick={close} />
+            </Modals.ModalHeader>
 
-            <HeadingTertiary className={Margins.bottom8}>Stream Settings</HeadingTertiary>
-
-            <Card className={cl("card")}>
-                <div className={cl("quality")}>
-                    <section className={cl("quality-section")}>
-                        <Heading tag="h5">Resolution</Heading>
-                        <OptionRadio
-                            options={StreamResolutions}
-                            settings={qualitySettings}
-                            settingsKey="resolution"
-                            onChange={value => (qualitySettings.resolution = value)}
-                        />
-                    </section>
-
-                    <section className={cl("quality-section")}>
-                        <Heading tag="h5">Frame Rate</Heading>
-                        <OptionRadio
-                            options={StreamFps}
-                            settings={qualitySettings}
-                            settingsKey="frameRate"
-                            onChange={value => (qualitySettings.frameRate = value)}
-                        />
-                    </section>
-                </div>
-                <div className={cl("quality")}>
-                    <section className={cl("quality-section")}>
-                        <Heading tag="h5">Content Type</Heading>
-                        <div>
+            <Modals.ModalContent className={cl("modal")}>
+                <Card className={cl("card")}>
+                    <div className={cl("quality")}>
+                        <section className={cl("quality-section")}>
+                            <Heading tag="h5">Resolution</Heading>
                             <OptionRadio
-                                options={["motion", "detail"]}
-                                labels={["Prefer Smoothness", "Prefer Clarity"]}
-                                settings={settings}
-                                settingsKey="contentHint"
-                                onChange={option => setSettings(s => ({ ...s, contentHint: option }))}
+                                options={StreamResolutions}
+                                settings={qualitySettings}
+                                settingsKey="resolution"
+                                onChange={value => (qualitySettings.resolution = value)}
                             />
+                        </section>
 
-                            <Paragraph className={Margins.top8}>
-                                Choosing "Prefer Clarity" will result in a significantly lower framerate in exchange for
-                                a much sharper and clearer image.
-                            </Paragraph>
-                        </div>
-                        {isWindows && (
-                            <FormSwitch
-                                title="Stream With Audio"
-                                hideBorder
-                                value={settings.audio}
-                                onChange={checked => setSettings(s => ({ ...s, audio: checked }))}
-                                className={cl("audio")}
+                        <section className={cl("quality-section")}>
+                            <Heading tag="h5">Frame Rate</Heading>
+                            <OptionRadio
+                                options={StreamFps}
+                                settings={qualitySettings}
+                                settingsKey="frameRate"
+                                onChange={value => (qualitySettings.frameRate = value)}
                             />
-                        )}
-                    </section>
-                </div>
+                        </section>
+                    </div>
+                    <div className={cl("quality")}>
+                        <section className={cl("quality-section")}>
+                            <Heading tag="h5">Content Type</Heading>
+                            <div>
+                                <OptionRadio
+                                    options={["motion", "detail"]}
+                                    labels={["Prefer Smoothness", "Prefer Clarity"]}
+                                    settings={settings}
+                                    settingsKey="contentHint"
+                                    onChange={option => setSettings(s => ({ ...s, contentHint: option }))}
+                                />
 
-                {isLinux && (
-                    <AudioSourcePickerLinux
-                        openSettings={openSettings}
-                        includeSources={settings.includeSources}
-                        excludeSources={settings.excludeSources}
-                        deviceSelect={Settings.audio?.deviceSelect}
-                        granularSelect={Settings.audio?.granularSelect}
-                        setIncludeSources={sources => setSettings(s => ({ ...s, includeSources: sources }))}
-                        setExcludeSources={sources => setSettings(s => ({ ...s, excludeSources: sources }))}
-                    />
-                )}
-            </Card>
-        </div>
+                                <Paragraph className={Margins.top8}>
+                                    Choosing "Prefer Clarity" will result in a significantly lower framerate in exchange
+                                    for a much sharper and clearer image.
+                                </Paragraph>
+                            </div>
+                            {isWindows && (
+                                <FormSwitch
+                                    title="Stream With Audio"
+                                    hideBorder
+                                    value={settings.audio}
+                                    onChange={checked => setSettings(s => ({ ...s, audio: checked }))}
+                                    className={cl("audio")}
+                                />
+                            )}
+                        </section>
+                    </div>
+
+                    {isLinux && (
+                        <AudioSourcePickerLinux
+                            openSettings={openAudioSettings}
+                            includeSources={settings.includeSources}
+                            excludeSources={settings.excludeSources}
+                            deviceSelect={Settings.audio?.deviceSelect}
+                            granularSelect={Settings.audio?.granularSelect}
+                            setIncludeSources={sources => setSettings(s => ({ ...s, includeSources: sources }))}
+                            setExcludeSources={sources => setSettings(s => ({ ...s, excludeSources: sources }))}
+                        />
+                    )}
+                </Card>
+            </Modals.ModalContent>
+            <Modals.ModalFooter className={cl("footer")}>
+                <Button onClick={close}>
+                    Done
+                </Button>
+            </Modals.ModalFooter>
+        </Modals.ModalRoot>
     );
 }
 
@@ -665,6 +708,54 @@ function AudioSourcePickerLinux({
     );
 }
 
+function getPresetName(contentHint?: string): string {
+    return contentHint === "detail" ? "Better Readability" : "Gaming";
+}
+
+function getPresetDescription(contentHint?: string): string {
+    return contentHint === "detail" ? "Sharper image" : "Smoother video";
+}
+
+function BottomBar({
+    settings,
+    setSettings,
+    qualitySettings
+}: {
+    settings: StreamSettings;
+    setSettings: Dispatch<SetStateAction<StreamSettings>>;
+    qualitySettings: any;
+}) {
+    const openSettings = () => {
+        openModal(props => (
+            <StreamSettingsModal
+                modalProps={props}
+                close={() => props.onClose()}
+                settings={settings}
+                setSettings={setSettings}
+                qualitySettings={qualitySettings}
+            />
+        ));
+    };
+
+    return (
+        <div className={cl("bottom-bar")}>
+            <div className={cl("bottom-bar-info")}>
+                <span className={cl("preset-name")}>{getPresetName(settings.contentHint)}</span>
+                <span className={cl("preset-details")}>
+                    {getPresetDescription(settings.contentHint)}
+                    <span className={cl("preset-dot")} />
+                    {qualitySettings.resolution}p
+                    <span className={cl("preset-dot")} />
+                    {qualitySettings.frameRate}fps
+                </span>
+            </div>
+            <button className={cl("gear-button")} onClick={openSettings} title="Stream Settings">
+                <CogWheel />
+            </button>
+        </div>
+    );
+}
+
 function ModalComponent({
     screens,
     modalProps,
@@ -679,6 +770,7 @@ function ModalComponent({
     skipPicker: boolean;
 }) {
     const [selected, setSelected] = useState<string | undefined>(skipPicker ? screens[0].id : void 0);
+    const [activeTab, setActiveTab] = useState<TabType>("applications");
     const [settings, setSettings] = useState<StreamSettings>({
         contentHint: "motion",
         audio: true,
@@ -689,88 +781,137 @@ function ModalComponent({
         frameRate: "30"
     });
 
+    const applicationScreens = screens.filter(s => s.id.startsWith("window:"));
+    const entireScreens = screens.filter(s => s.id.startsWith("screen:"));
+
+    const currentScreens =
+        activeTab === "applications" ? applicationScreens : activeTab === "screens" ? entireScreens : [];
+
+    const handleChooseScreen = (id: string) => {
+        setSelected(id);
+    };
+
+    const handleGoLive = () => {
+        if (!selected) return;
+
+        currentSettings = settings;
+        try {
+            const frameRate = Number(qualitySettings.frameRate);
+            const height = Number(qualitySettings.resolution);
+            const width = Math.round(height * (16 / 9));
+
+            const conn = [...MediaEngineStore.getMediaEngine().connections].find(
+                connection => connection.streamUserId === UserStore.getCurrentUser().id
+            );
+
+            if (conn) {
+                conn.videoStreamParameters[0].maxFrameRate = frameRate;
+                conn.videoStreamParameters[0].maxResolution.height = height;
+                conn.videoStreamParameters[0].maxResolution.width = width;
+            }
+
+            submit({
+                id: selected!,
+                ...settings
+            });
+
+            setTimeout(async () => {
+                const conn = [...MediaEngineStore.getMediaEngine().connections].find(
+                    connection => connection.streamUserId === UserStore.getCurrentUser().id
+                );
+                if (!conn) return;
+
+                const track = conn.input.stream.getVideoTracks()[0];
+
+                const constraints = {
+                    ...track.getConstraints(),
+                    frameRate: { min: frameRate, ideal: frameRate },
+                    width: { min: 640, ideal: width, max: width },
+                    height: { min: 480, ideal: height, max: height },
+                    advanced: [{ width: width, height: height }],
+                    resizeMode: "none"
+                };
+
+                try {
+                    await track.applyConstraints(constraints);
+
+                    logger.info("Applied constraints successfully. New constraints:", track.getConstraints());
+                } catch (e) {
+                    logger.error("Failed to apply constraints.", e);
+                }
+            }, 100);
+        } catch (error) {
+            logger.error("Error while submitting stream.", error);
+        }
+
+        close();
+    };
+
     return (
         <Modals.ModalRoot {...modalProps} size={ModalSize.MEDIUM}>
             <Modals.ModalHeader className={cl("header")}>
-                <BaseText size="lg" weight="semibold" tag="h3" style={{ flexGrow: 1 }}>
-                    Screen Share Picker
-                </BaseText>
+                <img
+                    className={cl("logo")}
+                    src="https://raw.githubusercontent.com/nicedozie4u/Supercord/refs/heads/main/static/icon.png"
+                    alt="Supercord"
+                    onError={e => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                />
+                <div className={cl("tabs")}>
+                    <button
+                        className={cl("tab")}
+                        data-active={activeTab === "applications"}
+                        onClick={() => setActiveTab("applications")}
+                    >
+                        <WindowIcon />
+                        Applications
+                    </button>
+                    <button
+                        className={cl("tab")}
+                        data-active={activeTab === "screens"}
+                        onClick={() => setActiveTab("screens")}
+                    >
+                        <MonitorIcon />
+                        Entire Screen
+                    </button>
+                    <button
+                        className={cl("tab")}
+                        data-active={activeTab === "devices"}
+                        onClick={() => setActiveTab("devices")}
+                    >
+                        <DeviceIcon />
+                        Devices
+                    </button>
+                </div>
                 <ModalCloseButton onClick={close} />
             </Modals.ModalHeader>
             <Modals.ModalContent className={cl("modal")}>
-                {!selected ? (
-                    <ScreenPicker screens={screens} chooseScreen={setSelected} />
+                {activeTab === "devices" ? (
+                    <div className={cl("empty")}>
+                        <DeviceIcon />
+                        <span className={cl("empty-text")}>No capture devices available</span>
+                    </div>
+                ) : currentScreens.length === 0 ? (
+                    <div className={cl("empty")}>
+                        <span className={cl("empty-text")}>
+                            {activeTab === "applications"
+                                ? "No application windows found"
+                                : "No screens found"}
+                        </span>
+                    </div>
                 ) : (
-                    <StreamSettingsUi
-                        source={screens.find(s => s.id === selected)!}
-                        settings={settings}
-                        setSettings={setSettings}
-                        skipPicker={skipPicker}
-                    />
+                    <ScreenPicker screens={currentScreens} chooseScreen={handleChooseScreen} />
                 )}
             </Modals.ModalContent>
             <Modals.ModalFooter className={cl("footer")}>
-                <Button
-                    disabled={!selected}
-                    onClick={() => {
-                        currentSettings = settings;
-                        try {
-                            const frameRate = Number(qualitySettings.frameRate);
-                            const height = Number(qualitySettings.resolution);
-                            const width = Math.round(height * (16 / 9));
+                <BottomBar settings={settings} setSettings={setSettings} qualitySettings={qualitySettings} />
 
-                            const conn = [...MediaEngineStore.getMediaEngine().connections].find(
-                                connection => connection.streamUserId === UserStore.getCurrentUser().id
-                            );
-
-                            if (conn) {
-                                conn.videoStreamParameters[0].maxFrameRate = frameRate;
-                                conn.videoStreamParameters[0].maxResolution.height = height;
-                                conn.videoStreamParameters[0].maxResolution.width = width;
-                            }
-
-                            submit({
-                                id: selected!,
-                                ...settings
-                            });
-
-                            setTimeout(async () => {
-                                const conn = [...MediaEngineStore.getMediaEngine().connections].find(
-                                    connection => connection.streamUserId === UserStore.getCurrentUser().id
-                                );
-                                if (!conn) return;
-
-                                const track = conn.input.stream.getVideoTracks()[0];
-
-                                const constraints = {
-                                    ...track.getConstraints(),
-                                    frameRate: { min: frameRate, ideal: frameRate },
-                                    width: { min: 640, ideal: width, max: width },
-                                    height: { min: 480, ideal: height, max: height },
-                                    advanced: [{ width: width, height: height }],
-                                    resizeMode: "none"
-                                };
-
-                                try {
-                                    await track.applyConstraints(constraints);
-
-                                    logger.info(
-                                        "Applied constraints successfully. New constraints:",
-                                        track.getConstraints()
-                                    );
-                                } catch (e) {
-                                    logger.error("Failed to apply constraints.", e);
-                                }
-                            }, 100);
-                        } catch (error) {
-                            logger.error("Error while submitting stream.", error);
-                        }
-
-                        close();
-                    }}
-                >
-                    Go Live
-                </Button>
+                {selected && (
+                    <Button onClick={handleGoLive}>
+                        Go Live
+                    </Button>
+                )}
 
                 {selected && !skipPicker ? (
                     <Button variant="secondary" onClick={() => setSelected(void 0)}>
