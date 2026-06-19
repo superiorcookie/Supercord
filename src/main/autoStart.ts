@@ -37,12 +37,12 @@ function makeAutoStartLinuxDesktop(): AutoStart {
             const desktopFile = stripIndent`
                 [Desktop Entry]
                 Type=Application
-                Name=Equibop
-                Comment=Equibop autostart script
+                Name=Supercord
+                Comment=Supercord autostart script
                 Exec=${getEscapedCommandLine().join(" ")}
                 StartupNotify=false
                 Terminal=false
-                Icon=equibop
+                Icon=supercord
             `;
 
             mkdirSync(dir, { recursive: true });
