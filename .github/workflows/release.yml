@@ -30,14 +30,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Supercord-core and Patcher
+        shell: bash
         run: |
           cd Supercord-core
-          npm install
-          npm run build
+          npm install -g pnpm
+          bun install
+          bun run build
           cd ..
           bun run build:patcher
 
       - name: Upload additional assets to Release
+        shell: bash
         run: gh release upload ${{ github.ref_name }} Supercord-core/dist/desktop.asar dist/SupercordPatcher.exe --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
