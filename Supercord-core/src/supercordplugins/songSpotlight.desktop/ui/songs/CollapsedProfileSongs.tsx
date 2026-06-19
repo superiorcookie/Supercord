@@ -5,6 +5,9 @@
  */
 
 import { BaseText } from "@components/index";
+import { RenderSongInfo } from "@song-spotlight/api/handlers";
+import { UserData } from "@song-spotlight/api/structs";
+import { sid } from "@song-spotlight/api/util";
 import { Native } from "@supercordplugins/songSpotlight.desktop/service";
 import {
     ContainerClasses,
@@ -13,9 +16,6 @@ import {
     ProfileCardClasses,
     Spinner,
 } from "@supercordplugins/songSpotlight.desktop/ui/common";
-import { RenderSongInfo } from "@song-spotlight/api/handlers";
-import { UserData } from "@song-spotlight/api/structs";
-import { sid } from "@song-spotlight/api/util";
 import { classes } from "@utils/index";
 import {
     SelectedChannelStore,

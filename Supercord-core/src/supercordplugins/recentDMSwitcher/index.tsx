@@ -8,7 +8,7 @@ import "./styles.css";
 
 import * as DataStore from "@api/DataStore";
 import { definePluginSettings } from "@api/Settings";
-import { SupercordDevs, IS_MAC } from "@utils/constants";
+import { IS_MAC,SupercordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import definePlugin, { makeRange, OptionType } from "@utils/types";
 import { Button, ChannelRouter, ChannelStore, closeModal, IconUtils, openModal,React, RelationshipStore, SelectedChannelStore, Toasts, UserStore } from "@webpack/common";

@@ -8,6 +8,7 @@ import { BaseText } from "@components/BaseText";
 import { Flex } from "@components/Flex";
 import { LinkIcon, PencilIcon } from "@components/Icons";
 import { Link } from "@components/Link";
+import { sid } from "@song-spotlight/api/util";
 import { listData } from "@supercordplugins/songSpotlight.desktop/lib/api";
 import { useAuthorizationStore } from "@supercordplugins/songSpotlight.desktop/lib/stores/AuthorizationStore";
 import { useSongStore } from "@supercordplugins/songSpotlight.desktop/lib/stores/SongStore";
@@ -20,7 +21,6 @@ import {
     Spinner,
 } from "@supercordplugins/songSpotlight.desktop/ui/common";
 import { openSettingsModal } from "@supercordplugins/songSpotlight.desktop/ui/settings";
-import { sid } from "@song-spotlight/api/util";
 import { copyWithToast } from "@utils/discord";
 import { classes } from "@utils/index";
 import { User } from "@vencord/discord-types";

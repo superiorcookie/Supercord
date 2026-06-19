@@ -8,6 +8,9 @@ import { BaseText } from "@components/BaseText";
 import { Flex } from "@components/Flex";
 import { LinkIcon } from "@components/Icons";
 import { Link } from "@components/Link";
+import { RenderInfoEntryBased, RenderSongInfo } from "@song-spotlight/api/handlers";
+import { Song as SongType } from "@song-spotlight/api/structs";
+import { isListLayout, sid } from "@song-spotlight/api/util";
 import { apiConstants } from "@supercordplugins/songSpotlight.desktop/lib/api";
 import { useSongStore } from "@supercordplugins/songSpotlight.desktop/lib/stores/SongStore";
 import { cl, formatCoverTooltip, formatDurationMs } from "@supercordplugins/songSpotlight.desktop/lib/utils";
@@ -25,9 +28,6 @@ import AudioPlayer from "@supercordplugins/songSpotlight.desktop/ui/components/A
 import ProgressCircle from "@supercordplugins/songSpotlight.desktop/ui/components/ProgressCircle";
 import ServiceIcon from "@supercordplugins/songSpotlight.desktop/ui/components/ServiceIcon";
 import { openSettingsModal } from "@supercordplugins/songSpotlight.desktop/ui/settings";
-import { RenderInfoEntryBased, RenderSongInfo } from "@song-spotlight/api/handlers";
-import { Song as SongType } from "@song-spotlight/api/structs";
-import { isListLayout, sid } from "@song-spotlight/api/util";
 import { copyWithToast } from "@utils/discord";
 import { classes } from "@utils/misc";
 import {

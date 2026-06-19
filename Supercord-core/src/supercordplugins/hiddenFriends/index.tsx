@@ -1,15 +1,21 @@
-import { NavContextMenuPatchCallback, findGroupChildrenByChildId } from "@api/ContextMenu";
-import { definePluginSettings } from "@api/Settings";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { findGroupChildrenByChildId,NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { HeaderBarButton } from "@api/HeaderBar";
+import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
-import { FluxDispatcher, Menu, React, ReactDOM, ChannelStore, UserStore, ContextMenuApi, NavigationRouter, SelectedChannelStore } from "@webpack/common";
 import { useForceUpdater } from "@utils/react";
+import definePlugin, { OptionType } from "@utils/types";
+import { ChannelStore, ContextMenuApi, Menu, NavigationRouter, React, ReactDOM, SelectedChannelStore,UserStore } from "@webpack/common";
 
 let forceUpdateDms: (() => void) | undefined = undefined;
 
 function HiddenFriendsMenu({ onClose }: { onClose: () => void }) {
-    const hiddenIds = settings.store.hiddenIds;
+    const { hiddenIds } = settings.store;
 
     return (
         <Menu.Menu navId="hidden-friends" onClose={onClose} label="Hidden Friends">
@@ -19,8 +25,8 @@ function HiddenFriendsMenu({ onClose }: { onClose: () => void }) {
                 hiddenIds.map(id => {
                     const channel = ChannelStore.getChannel(id);
                     if (!channel) return null;
-                    
-                    let name = channel.name;
+
+                    let { name } = channel;
                     if (!name && channel.type === 1) {
                         const user = UserStore.getUser(channel.recipients[0]);
                         name = user?.globalName || user?.username || "Unknown User";
@@ -28,6 +34,7 @@ function HiddenFriendsMenu({ onClose }: { onClose: () => void }) {
 
                     return (
                         <Menu.MenuItem
+                            key={id}
                             id={id}
                             label={name || "Unknown Group"}
                             action={() => {
@@ -101,16 +108,17 @@ const UserContext: NavContextMenuPatchCallback = (children, props) => {
 
 function injectSidebarButton() {
     const friendsLink = document.querySelector('a[href="/channels/@me"]');
-    const ul = friendsLink ? friendsLink.closest('ul') : null;
-    
+    const ul = friendsLink ? friendsLink.closest("ul") : null;
+
     if (ul && !document.getElementById("vc-hidden-friends-btn")) {
         const li = document.createElement("li");
         li.id = "vc-hidden-friends-btn";
         li.className = "channel__972a0 container_e45859";
         ul.appendChild(li);
-        
+
+        // eslint-disable-next-line react/no-deprecated
         ReactDOM.render(
-            <div className="interactive_f5eb4b interactive_c91bad" style={{ cursor: "pointer", padding: "1px 0" }} onClick={(e) => {
+            <div className="interactive_f5eb4b interactive_c91bad" style={{ cursor: "pointer", padding: "1px 0" }} onClick={e => {
                 ContextMenuApi.openContextMenu(e, () => <HiddenFriendsMenu onClose={ContextMenuApi.closeContextMenu} />);
             }}>
                 <div className="layout_c91bad">
@@ -132,18 +140,18 @@ function injectSidebarButton() {
 }
 
 const UserProfileContext: NavContextMenuPatchCallback = (children, props: any) => {
-    const user = props.user;
+    const { user } = props;
     if (!user) return;
-    
+
     // We need the DM channel ID to hide/unhide
     const channelId = ChannelStore.getDMFromUserId(user.id);
     if (!channelId) return;
 
     const isHidden = settings.store.hiddenIds.includes(channelId);
-    
+
     // Try to place it near "block" or "ignore", otherwise just append
     const container = findGroupChildrenByChildId("block", children) || findGroupChildrenByChildId("ignore", children) || children;
-    
+
     if (Array.isArray(container)) {
         const blockIdx = container.findIndex(c => c?.props?.id === "block" || c?.props?.id === "ignore");
         if (blockIdx > -1) {
@@ -158,27 +166,27 @@ function injectFriendsTab() {
     // Find the Friends tab bar by looking for the Add Friend button
     const tabBar = document.querySelector('[class*="tabBar_"][aria-label="Friends"]') || document.querySelector('[class*="tabBar_"][role="tablist"]');
     if (!tabBar) return;
-    
+
     const tabs = Array.from(tabBar.children);
     const addFriendBtn = tabs.find(c => c.textContent === "Add Friend" || c.className.includes("addFriend"));
     if (!addFriendBtn) return;
-    
+
     if (document.getElementById("vc-hidden-friends-top-tab")) return;
 
     const newTab = document.createElement("div");
     newTab.id = "vc-hidden-friends-top-tab";
     // Copy the class of a normal tab (e.g. the "All" tab) to blend in
     const normalTab = tabs.find(c => c.textContent === "All");
-    newTab.className = normalTab ? normalTab.className.replace(/selected_[a-zA-Z0-9]+/, '') : "item_c2739c themed_a0";
+    newTab.className = normalTab ? normalTab.className.replace(/selected_[a-zA-Z0-9]+/, "") : "item_c2739c themed_a0";
     newTab.style.cursor = "pointer";
     newTab.innerText = "Hidden";
     newTab.setAttribute("role", "tab");
-    
+
     // Insert before "Add Friend"
     tabBar.insertBefore(newTab, addFriendBtn);
 
     // Clicking the tab opens the same ContextMenu right under the tab
-    newTab.addEventListener("click", (e) => {
+    newTab.addEventListener("click", e => {
         ContextMenuApi.openContextMenu(e as any, () => <HiddenFriendsMenu onClose={ContextMenuApi.closeContextMenu} />);
     });
 }
@@ -192,7 +200,7 @@ export default definePlugin({
     authors: [Devs.prism],
     dependencies: ["HeaderBarAPI"],
     settings,
-    
+
     start() {
         injectInterval = setInterval(() => {
             injectSidebarButton();
@@ -204,6 +212,7 @@ export default definePlugin({
         clearInterval(injectInterval);
         const el = document.getElementById("vc-hidden-friends-btn");
         if (el) {
+            // eslint-disable-next-line react/no-deprecated
             ReactDOM.unmountComponentAtNode(el);
             el.remove();
         }
@@ -224,7 +233,7 @@ export default definePlugin({
             settings.use(["hiddenIds"]);
             const channelId = SelectedChannelStore.getChannelId();
             const channel = ChannelStore.getChannel(channelId);
-            
+
             if (!channel || (channel.type !== 1 && channel.type !== 3)) return null;
 
             const isHidden = settings.store.hiddenIds.includes(channel.id);

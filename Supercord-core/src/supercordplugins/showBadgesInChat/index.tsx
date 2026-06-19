@@ -8,7 +8,7 @@ import "./styles.css";
 
 import badges from "@plugins/_api/badges";
 import { Devs, SupercordDevs } from "@utils/constants";
-import { isSupercordPluginDev, isPluginDev } from "@utils/misc";
+import { isPluginDev,isSupercordPluginDev } from "@utils/misc";
 import definePlugin from "@utils/types";
 import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
 

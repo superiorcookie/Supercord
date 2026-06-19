@@ -19,7 +19,7 @@
 import { User } from "@vencord/discord-types";
 import { ChannelStore, GuildMemberStore, IconUtils } from "@webpack/common";
 
-import { SUPERCORD_HELPERS, SupercordDevsById, GUILD_ID, KNOWN_ISSUES_CHANNEL_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
+import { GUILD_ID, KNOWN_ISSUES_CHANNEL_ID, SUPERCORD_HELPERS, SupercordDevsById, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments

@@ -1,7 +1,7 @@
-/*
- * Vesktop, a desktop app aiming to give you a snappier Discord Experience
- * Copyright (c) 2023 Vendicated and Vencord contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
+/*
+ * Vesktop, a desktop app aiming to give you a snappier Discord Experience
+ * Copyright (c) 2026 Vendicated and Vesktop contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import "./screenSharePicker.css";
@@ -14,7 +14,6 @@ import {
     CogWheel,
     FormSwitch,
     Heading,
-    HeadingTertiary,
     Margins,
     Paragraph,
     RestartIcon,
@@ -34,7 +33,7 @@ import { onceReady } from "@equicord/types/webpack";
 import { FluxDispatcher, MediaEngineStore, Select, UserStore, useState } from "@equicord/types/webpack/common";
 import { Node } from "@vencord/venmic";
 import type { Dispatch, SetStateAction } from "react";
-import { State, useSettings, useVesktopState } from "renderer/settings";
+import { useSettings, useVesktopState } from "renderer/settings";
 import { isLinux, isWindows } from "renderer/utils";
 
 import { SimpleErrorBoundary } from "./SimpleErrorBoundary";

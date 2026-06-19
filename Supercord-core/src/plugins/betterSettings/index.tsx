@@ -6,7 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
-import { AchievementsIcon, AppsIcon, CreditCardIcon, SupercordIcon, GameControllerIcon, HammerAndChiselIcon, MainSettingsIcon, PencilSparkleIcon, UserIcon } from "@components/Icons";
+import { AchievementsIcon, AppsIcon, CreditCardIcon, GameControllerIcon, HammerAndChiselIcon, MainSettingsIcon, PencilSparkleIcon, SupercordIcon, UserIcon } from "@components/Icons";
 import { buildPluginMenuEntries, buildThemeMenuEntries } from "@supercordplugins/supercordToolbox/menu";
 import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";

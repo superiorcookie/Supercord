@@ -7,10 +7,10 @@
 import { registerCommands } from "../api/registry";
 import { loadCustomCommands, registerCustomCommands } from "./custom";
 import { discordCommands } from "./discordActions";
-import { supercordCommands } from "./supercord";
 import { navigationCommands } from "./navigation";
 import { pluginCommands } from "./pluginManagement";
 import { sendDmCommand } from "./sendDm";
+import { supercordCommands } from "./supercord";
 
 export async function registerBuiltinCommands() {
     registerCommands("CommandPalette.builtin", [

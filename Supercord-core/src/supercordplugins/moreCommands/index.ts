@@ -19,7 +19,7 @@
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, OptionalMessageOption, RequiredMessageOption, sendBotMessage } from "@api/Commands";
 import { addMessagePreEditListener, addMessagePreSendListener, MessageObject, removeMessagePreEditListener, removeMessagePreSendListener } from "@api/MessageEvents";
 import { migratePluginSettings } from "@api/Settings";
-import { Devs, SupercordDevs, GUILD_IDS } from "@utils/constants";
+import { Devs, GUILD_IDS,SupercordDevs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import definePlugin from "@utils/types";
 import { DraftType, UploadHandler, UploadManager, UserAffinitiesStore, UserStore } from "@webpack/common";

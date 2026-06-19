@@ -1,9 +1,15 @@
-import { definePluginSettings } from "@api/Settings";
-import { HeaderBarButton, ChannelToolbarButtonProps } from "@api/HeaderBar";
-import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import "./style.css";
+
+import { ChannelToolbarButtonProps,HeaderBarButton } from "@api/HeaderBar";
+import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
     privacyEnabled: {
@@ -11,7 +17,7 @@ const settings = definePluginSettings({
         description: "Is the privacy screen currently enabled?",
         default: false,
         restartNeeded: false,
-        onChange: (v) => {
+        onChange: v => {
             if ((window as any).VencordNative && (window as any).VencordNative.native && (window as any).VencordNative.native.setContentProtection) {
                 (window as any).VencordNative.native.setContentProtection(v);
             }
