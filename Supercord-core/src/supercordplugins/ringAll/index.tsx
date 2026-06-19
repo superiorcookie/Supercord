@@ -108,11 +108,11 @@ export default definePlugin({
 
     patches: [
         {
-            find: "}getAccessibilityLabel(){",
+            find: "renderDisconnectButton()",
             predicate: () => settings.store.showInVoicePanel,
             replacement: {
-                match: /(this\.renderVoiceStates\(\),)(\i)/,
-                replace: "$1 [$self.renderRingButton(), $2]"
+                match: /this\.renderDisconnectButton\(\)/g,
+                replace: "[$self.renderRingButton(), $&]"
             }
         }
     ],
