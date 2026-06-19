@@ -7,7 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { SupercordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Button, React, RestAPI, Tooltip, UserStore, VoiceStateStore } from "@webpack/common";
+import { Button, React, ReactDOM, RestAPI, Tooltip, UserStore, VoiceStateStore } from "@webpack/common";
 
 const settings = definePluginSettings({
     showInVoicePanel: {
@@ -62,30 +62,70 @@ async function ringAll(channelId: string) {
 function RingAllButton() {
     const [, rerender] = React.useReducer(value => value + 1, 0);
     const channelId = getCurrentVoiceChannelId();
+    const ref = React.useRef<HTMLDivElement>(null);
+    const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
 
     React.useEffect(() => {
         listeners.add(rerender);
         return () => void listeners.delete(rerender);
     }, []);
 
+    React.useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        const findTarget = () => {
+            if (portalTarget && document.contains(portalTarget)) return;
+            
+            const tabs = document.querySelectorAll('[role="tab"]');
+            let privacyTab: HTMLElement | null = null;
+            for (const tab of Array.from(tabs)) {
+                if (tab.id.toLowerCase().includes('privacy') || tab.textContent?.toLowerCase().includes('privacy')) {
+                    privacyTab = tab as HTMLElement;
+                    break;
+                }
+            }
+            
+            if (privacyTab && privacyTab.parentElement) {
+                let wrapper = privacyTab.previousElementSibling as HTMLElement;
+                if (!wrapper || wrapper.id !== 'ring-all-wrapper') {
+                    wrapper = document.createElement('div');
+                    wrapper.id = 'ring-all-wrapper';
+                    wrapper.style.display = 'flex';
+                    wrapper.style.alignItems = 'center';
+                    wrapper.style.marginRight = '8px'; // Add some spacing between the button and "Privacy"
+                    privacyTab.parentElement.insertBefore(wrapper, privacyTab);
+                }
+                setPortalTarget(wrapper);
+            } else if (portalTarget) {
+                setPortalTarget(null);
+            }
+        };
+
+        findTarget();
+        interval = setInterval(findTarget, 200); // Poll fast so it injects smoothly when popup opens
+        return () => clearInterval(interval);
+    }, [portalTarget]);
+
     if (!channelId) return null;
 
-    return (
+    if (!portalTarget) {
+        return <div ref={ref} style={{ display: 'none' }} />;
+    }
+
+    return ReactDOM.createPortal(
         <Tooltip text={cooldown ? "Ring All cooldown" : "Ring Everyone"}>
             {tooltipProps => (
                 <Button
                     {...tooltipProps}
                     size={Button.Sizes.MIN}
                     color={Button.Colors.TRANSPARENT}
-                    look={Button.Looks.FILLED}
+                    look={Button.Looks.BLANK}
                     disabled={cooldown}
                     onClick={() => void ringAll(channelId)}
                     style={{
-                        width: 32,
-                        height: 32,
-                        minWidth: 32,
+                        width: 24,
+                        height: 24,
+                        minWidth: 24,
                         padding: 0,
-                        marginLeft: 8,
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center"
@@ -94,7 +134,8 @@ function RingAllButton() {
                     <RingIcon />
                 </Button>
             )}
-        </Tooltip>
+        </Tooltip>,
+        portalTarget
     );
 }
 
@@ -108,11 +149,11 @@ export default definePlugin({
 
     patches: [
         {
-            find: "renderDisconnectButton()",
+            find: '"RTCConnectionMenu"',
             predicate: () => settings.store.showInVoicePanel,
             replacement: {
-                match: /this\.renderDisconnectButton\(\)/g,
-                replace: "[$self.renderRingButton(), $&]"
+                match: /("RTCConnectionMenu".{0,200}?lineClamp:1,children:)(\i)(?=,|}\))/,
+                replace: "$1[$2, $self.renderRingButton()]"
             }
         }
     ],
