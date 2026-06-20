@@ -51,6 +51,8 @@ const settings = definePluginSettings({
     replaceBios: { type: OptionType.BOOLEAN, description: "Overwrite every profile bio / About Me.", default: true },
     replaceAllText: { type: OptionType.BOOLEAN, description: "NUCLEAR: replace EVERY piece of visible text in the app (messages, buttons, labels...). Skips text boxes so you can still type.", default: true },
     cssFallback: { type: OptionType.BOOLEAN, description: "Inject CSS so background-image avatars, role icons & reactions also get replaced.", default: true },
+    infectEmbeds: { type: OptionType.BOOLEAN, description: "Infect embeds, attachments, link previews, GIFs and ALL other images.", default: true },
+    infectSvgs: { type: OptionType.BOOLEAN, description: "Infect SVG icons & SVG <image> elements (avatar masks, button icons).", default: true },
 
     // ── CHAOS ────────────────────────────────────────────────────────────────
     jumpscares: { type: OptionType.BOOLEAN, description: "CHAOS: random full-screen Set_01_OA jumpscares.", default: true },
@@ -134,9 +136,94 @@ img[class*="banner"], [class*="banner"] img, img[src*="/banners/"] {
 [class*="bannerImage"][style*="background-image"] {
     background-image: url("${u}") !important; background-size: cover !important; background-position: center !important;
 }
+${settings.store.infectEmbeds ? `
+/* Embeds, attachments, link previews, GIFs, media — and ANY other <img> */
+[class*="embed"] img, [class*="imageContent"] img, [class*="originalLink"] img,
+[class*="lazyImg"], img[class*="lazyImg"], [class*="attachment"] img,
+img[src*="media.discordapp.net"], img[src*="cdn.discordapp.com/attachments"],
+video[poster], img {
+    content: url("${u}") !important; object-fit: contain !important;
+}
+/* GIFs/clips render as <video> — mask them with the image */
+[class*="imageWrapper"] video, [class*="embedVideo"] video, video[class*="embedMedia"] {
+    visibility: hidden !important;
+}
+[class*="imageWrapper"]:has(video), [class*="embedVideo"]:has(video) {
+    background: url("${u}") center / contain no-repeat !important;
+}` : ""}
+${settings.store.infectSvgs ? `
+/* Inline SVG icons → hide their guts and show Set_01_OA behind them */
+svg:not([data-set01-keep]) > * { opacity: 0 !important; }
+svg:not([data-set01-keep]) {
+    background: url("${u}") center / contain no-repeat !important;
+    border-radius: 4px;
+}` : ""}
 `;
     document.head.appendChild(styleEl);
     restorers.push(() => { styleEl?.remove(); styleEl = undefined; });
+}
+
+// ── SVG <image> href infector (avatar masks, etc. — CSS can't set href) ───────
+const imageHrefOriginals = new Map<Element, { href: string | null; xlink: string | null }>();
+let svgImageObserver: MutationObserver | undefined;
+const XLINK = "http://www.w3.org/1999/xlink";
+
+function infectImageEl(el: Element) {
+    const u = url();
+    if (el.getAttribute("href") === u) return; // already done — avoids loops
+    if (!imageHrefOriginals.has(el)) {
+        imageHrefOriginals.set(el, {
+            href: el.getAttribute("href"),
+            xlink: el.getAttributeNS(XLINK, "href"),
+        });
+    }
+    el.setAttribute("href", u);
+    try { el.setAttributeNS(XLINK, "xlink:href", u); } catch { /* not all support it */ }
+}
+
+function infectImageEls(root: ParentNode) {
+    root.querySelectorAll?.("image").forEach(infectImageEl);
+}
+
+function startImageElementInfector() {
+    infectImageEls(document.body);
+
+    const queue: Node[] = [];
+    let scheduled = false;
+    svgImageObserver = new MutationObserver(muts => {
+        for (const m of muts) {
+            if (m.type === "attributes") queue.push(m.target);
+            else m.addedNodes.forEach(n => queue.push(n));
+        }
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(() => {
+            scheduled = false;
+            for (const node of queue.splice(0)) {
+                if (node.nodeType !== Node.ELEMENT_NODE) continue;
+                const el = node as Element;
+                if (el.tagName.toLowerCase() === "image") infectImageEl(el);
+                else infectImageEls(el);
+            }
+        });
+    });
+    svgImageObserver.observe(document.body, {
+        childList: true, subtree: true, attributes: true, attributeFilter: ["href", "xlink:href"],
+    });
+
+    restorers.push(() => {
+        svgImageObserver?.disconnect();
+        svgImageObserver = undefined;
+        imageHrefOriginals.forEach((orig, el) => {
+            try {
+                if (orig.href === null) el.removeAttribute("href");
+                else el.setAttribute("href", orig.href);
+                if (orig.xlink === null) el.removeAttributeNS(XLINK, "href");
+                else el.setAttributeNS(XLINK, "xlink:href", orig.xlink);
+            } catch { /* element gone */ }
+        });
+        imageHrefOriginals.clear();
+    });
 }
 
 function patchNames() {
@@ -378,6 +465,7 @@ function applyEffects() {
     }
     if (settings.store.replaceAllText) startTextReplacer();
     if (settings.store.cssFallback) injectCss();
+    if (settings.store.infectSvgs) startImageElementInfector();
     startChaos();
 }
 
