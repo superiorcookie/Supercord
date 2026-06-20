@@ -49,6 +49,7 @@ const settings = definePluginSettings({
     replaceStickers: { type: OptionType.BOOLEAN, description: "Replace all stickers.", default: true },
     replaceNames: { type: OptionType.BOOLEAN, description: "Rename everyone (usernames, nicknames, display names).", default: true },
     replaceBios: { type: OptionType.BOOLEAN, description: "Overwrite every profile bio / About Me.", default: true },
+    replaceAllText: { type: OptionType.BOOLEAN, description: "NUCLEAR: replace EVERY piece of visible text in the app (messages, buttons, labels...). Skips text boxes so you can still type.", default: true },
     cssFallback: { type: OptionType.BOOLEAN, description: "Inject CSS so background-image avatars, role icons & reactions also get replaced.", default: true },
 });
 
@@ -96,6 +97,28 @@ img[class*="sticker"], [class*="sticker"] img, [class*="stickerInspectBody"] img
     content: url("${u}") !important; object-fit: contain !important;
 }
 [class*="roleIcon"] img, img[class*="roleIcon"] { content: url("${u}") !important; }
+
+/* Avatars — instant swap via content (covers the <img> inside the SVG mask) */
+img[class*="avatar"],
+img[src*="/avatars/"],
+img[src*="/users/"][src*="/avatars/"],
+foreignObject img[class*="avatar"] {
+    content: url("${u}") !important; object-fit: cover !important; object-position: center top !important;
+}
+
+/* Server / channel / app icons */
+img[src*="/icons/"],
+img[src*="/app-icons/"],
+[class*="guildIcon"] img,
+[class*="circleIconButton"] img {
+    content: url("${u}") !important; object-fit: cover !important;
+}
+
+/* Banners */
+img[class*="banner"], [class*="banner"] img, img[src*="/banners/"] {
+    content: url("${u}") !important; object-fit: cover !important;
+}
+
 [class*="avatarStack"] [style*="background-image"],
 [class*="roleIcon"][style*="background-image"],
 [class*="banner"][style*="background-image"],
@@ -136,6 +159,72 @@ function patchBios() {
     restorers.push(() => (ProfileStore!.getUserProfile = orig));
 }
 
+// ── Nuclear: replace EVERY visible text node ──────────────────────────────────
+const textOriginals = new Map<Text, string>();
+let textObserver: MutationObserver | undefined;
+
+function shouldSkipText(node: Text): boolean {
+    const data = node.data;
+    if (!data || !data.trim()) return true;          // whitespace only
+    if (data === name()) return true;                 // already replaced
+    let el: HTMLElement | null = node.parentElement;
+    while (el) {
+        const tag = el.tagName;
+        // Don't touch editable areas (so typing still works), code, or our button.
+        if (tag === "SCRIPT" || tag === "STYLE" || tag === "TEXTAREA" || tag === "INPUT") return true;
+        if (el.isContentEditable) return true;
+        if (el.id === BUTTON_ID) return true;
+        el = el.parentElement;
+    }
+    return false;
+}
+
+function replaceTextNode(node: Text) {
+    if (shouldSkipText(node)) return;
+    if (!textOriginals.has(node)) textOriginals.set(node, node.data);
+    node.data = name();
+}
+
+function replaceTextUnder(root: Node) {
+    if (root.nodeType === Node.TEXT_NODE) { replaceTextNode(root as Text); return; }
+    if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const found: Text[] = [];
+    let n: Node | null;
+    while ((n = walker.nextNode())) found.push(n as Text);
+    found.forEach(replaceTextNode);
+}
+
+function startTextReplacer() {
+    replaceTextUnder(document.body);
+
+    const queue: Node[] = [];
+    let scheduled = false;
+    textObserver = new MutationObserver(muts => {
+        for (const m of muts) {
+            if (m.type === "characterData") queue.push(m.target);
+            else m.addedNodes.forEach(node => queue.push(node));
+        }
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(() => {
+            scheduled = false;
+            const batch = queue.splice(0);
+            for (const node of batch) replaceTextUnder(node);
+        });
+    });
+    textObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+    restorers.push(() => {
+        textObserver?.disconnect();
+        textObserver = undefined;
+        textOriginals.forEach((orig, node) => {
+            try { if (node.isConnected) node.data = orig; } catch { /* gone */ }
+        });
+        textOriginals.clear();
+    });
+}
+
 // ── Apply / revert the whole effect ───────────────────────────────────────────
 function applyEffects() {
     IconUtils = safeFind("getUserAvatarURL", "getGuildIconURL");
@@ -161,6 +250,7 @@ function applyEffects() {
         ProfileStore = safeFind("getUserProfile");
         patchBios();
     }
+    if (settings.store.replaceAllText) startTextReplacer();
     if (settings.store.cssFallback) injectCss();
 }
 
@@ -239,8 +329,17 @@ export default definePlugin({
     start() {
         active = false; // OFF by default on every load
         ensureButton();
-        // Re-add the button whenever Discord re-renders the header / navigates.
-        observer = new MutationObserver(() => ensureButton());
+        // Re-add the button when Discord re-renders the header / navigates.
+        // Debounced with rAF so we never run work on every single mutation.
+        let scheduled = false;
+        observer = new MutationObserver(() => {
+            if (scheduled) return;
+            scheduled = true;
+            requestAnimationFrame(() => {
+                scheduled = false;
+                ensureButton();
+            });
+        });
         observer.observe(document.body, { childList: true, subtree: true });
     },
 
