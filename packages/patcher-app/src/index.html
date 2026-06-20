@@ -34,10 +34,16 @@
       </div>
 
       <div class="action-area">
-        <button id="patch-btn" class="patch-btn">
-          <span class="btn-text">Install Supercord</span>
-          <div class="btn-glow"></div>
-        </button>
+        <div class="btn-group" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+          <button id="patch-btn" class="patch-btn">
+            <span class="btn-text">Install Supercord</span>
+            <div class="btn-glow"></div>
+          </button>
+
+          <button id="unpatch-btn" class="patch-btn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+            <span class="btn-text" style="color: #ccc;">Uninstall</span>
+          </button>
+        </div>
 
         <div id="status-container" class="status-container hidden">
           <div class="progress-bar-bg">

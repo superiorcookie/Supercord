@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusText = document.getElementById('status-text');
   const progressBar = document.getElementById('progress-bar');
   const btnText = patchBtn.querySelector('.btn-text');
+  const unpatchBtn = document.getElementById('unpatch-btn');
+  const unpatchBtnText = unpatchBtn.querySelector('.btn-text');
 
   minimizeBtn.addEventListener('click', () => {
     window.electronAPI.minimizeApp();
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   patchBtn.addEventListener('click', async () => {
     patchBtn.disabled = true;
+    unpatchBtn.disabled = true;
     btnText.textContent = 'Installing...';
     statusContainer.classList.remove('hidden');
     progressBar.style.width = '10%';
@@ -44,6 +47,40 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         btnText.textContent = 'Retry Install';
         patchBtn.disabled = false;
+        unpatchBtn.disabled = false;
+      }, 3000);
+    }
+  });
+
+  unpatchBtn.addEventListener('click', async () => {
+    patchBtn.disabled = true;
+    unpatchBtn.disabled = true;
+    unpatchBtnText.textContent = 'Uninstalling...';
+    statusContainer.classList.remove('hidden');
+    progressBar.style.width = '10%';
+    progressBar.style.background = 'linear-gradient(90deg, #64748b, #94a3b8)';
+
+    const result = await window.electronAPI.startUnpatch();
+
+    if (result.success) {
+      unpatchBtnText.textContent = 'Uninstalled';
+      unpatchBtn.style.borderColor = 'var(--success)';
+      progressBar.style.background = 'var(--success)';
+      
+      setTimeout(() => {
+        unpatchBtnText.textContent = 'Exit';
+        unpatchBtn.disabled = false;
+        unpatchBtn.onclick = () => window.electronAPI.closeApp();
+      }, 2000);
+    } else {
+      unpatchBtnText.textContent = 'Failed';
+      unpatchBtn.style.borderColor = 'var(--error)';
+      progressBar.style.background = 'var(--error)';
+      
+      setTimeout(() => {
+        unpatchBtnText.textContent = 'Retry Uninstall';
+        patchBtn.disabled = false;
+        unpatchBtn.disabled = false;
       }, 3000);
     }
   });

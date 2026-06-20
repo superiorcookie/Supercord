@@ -136,3 +136,51 @@ ipcMain.handle('start-patch', async (event) => {
     return { success: false, error: err.message };
   }
 });
+
+ipcMain.handle('start-unpatch', async (event) => {
+  try {
+    mainWindow.webContents.send('patch-status', { step: 1, message: 'Closing Discord...' });
+    
+    // Close Discord
+    const { execSync } = require('child_process');
+    try {
+      if (process.platform === 'win32') {
+        execSync('taskkill /F /IM Discord.exe /T', { stdio: 'ignore' });
+      } else {
+        execSync('killall Discord', { stdio: 'ignore' });
+      }
+    } catch (e) {
+      // Ignore if Discord is not running
+    }
+
+    mainWindow.webContents.send('patch-status', { step: 2, message: 'Reverting Discord to normal...' });
+
+    // Uninject
+    const discordDir = path.join(LOCALAPPDATA, "Discord");
+    if (!fs.existsSync(discordDir)) throw new Error("Discord not found at " + discordDir);
+
+    const apps = fs.readdirSync(discordDir).filter(f => f.startsWith("app-")).sort().reverse();
+    if (apps.length === 0) throw new Error("No Discord app- folders found!");
+
+    const appDir = path.join(discordDir, apps[0]);
+    const modulesDir = path.join(appDir, "modules");
+    if (!fs.existsSync(modulesDir)) throw new Error("Modules folder not found in " + appDir);
+
+    const cores = fs.readdirSync(modulesDir).filter(f => f.startsWith("discord_desktop_core-")).sort().reverse();
+    if (cores.length === 0) throw new Error("No discord_desktop_core- folder found!");
+
+    const coreDir = path.join(modulesDir, cores[0], "discord_desktop_core");
+    const indexPath = path.join(coreDir, "index.js");
+
+    if (fs.existsSync(indexPath)) {
+      fs.writeFileSync(indexPath, "module.exports = require('./core.asar');\n");
+    }
+    
+    mainWindow.webContents.send('patch-status', { step: 4, message: 'Successfully Uninstalled (Settings Kept)!' });
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    mainWindow.webContents.send('patch-status', { step: -1, message: err.message });
+    return { success: false, error: err.message };
+  }
+});
