@@ -51,6 +51,15 @@ const settings = definePluginSettings({
     replaceBios: { type: OptionType.BOOLEAN, description: "Overwrite every profile bio / About Me.", default: true },
     replaceAllText: { type: OptionType.BOOLEAN, description: "NUCLEAR: replace EVERY piece of visible text in the app (messages, buttons, labels...). Skips text boxes so you can still type.", default: true },
     cssFallback: { type: OptionType.BOOLEAN, description: "Inject CSS so background-image avatars, role icons & reactions also get replaced.", default: true },
+
+    // ── CHAOS ────────────────────────────────────────────────────────────────
+    jumpscares: { type: OptionType.BOOLEAN, description: "CHAOS: random full-screen Set_01_OA jumpscares.", default: true },
+    jumpscareSound: { type: OptionType.STRING, description: "Optional sound URL to play on jumpscare (leave blank for silent).", default: "" },
+    jumpscareMinSec: { type: OptionType.NUMBER, description: "Minimum seconds between jumpscares.", default: 20 },
+    jumpscareMaxSec: { type: OptionType.NUMBER, description: "Maximum seconds between jumpscares.", default: 70 },
+    floatingImages: { type: OptionType.BOOLEAN, description: "CHAOS: a constant rain of floating Set_01_OA images.", default: true },
+    screenShake: { type: OptionType.BOOLEAN, description: "CHAOS: random screen-shake bursts.", default: true },
+    spinningImages: { type: OptionType.BOOLEAN, description: "CHAOS: make every replaced image wobble/spin.", default: true },
 });
 
 // ── Runtime state ────────────────────────────────────────────────────────────
@@ -225,6 +234,123 @@ function startTextReplacer() {
     });
 }
 
+// ── CHAOS engine: jumpscares, floaters, shakes, wobble ────────────────────────
+const timers: number[] = [];
+const intervals: number[] = [];
+let crazyStyleEl: HTMLStyleElement | undefined;
+
+function injectCrazyCss() {
+    if (crazyStyleEl) return;
+    crazyStyleEl = document.createElement("style");
+    crazyStyleEl.id = "set01-crazy-css";
+    crazyStyleEl.textContent = `
+@keyframes set01-js {
+    0%   { opacity: 0; transform: scale(2.4) rotate(0deg); }
+    8%   { opacity: 1; transform: scale(1) rotate(0deg); }
+    20%  { transform: scale(1.04) translate(-10px, 6px) rotate(-2deg); }
+    35%  { transform: scale(1) translate(10px, -6px) rotate(2deg); }
+    50%  { transform: scale(1.06) translate(-8px, -6px) rotate(-1deg); }
+    70%  { transform: scale(1) translate(6px, 8px) rotate(1deg); }
+    100% { opacity: 0; transform: scale(1.3); }
+}
+@keyframes set01-float {
+    from { transform: translateY(0) rotate(0deg); opacity: .9; }
+    to   { transform: translateY(-130vh) rotate(540deg); opacity: 0; }
+}
+@keyframes set01-shake {
+    0%,100% { transform: translate(0,0) rotate(0); }
+    20% { transform: translate(-10px, 8px) rotate(-1.5deg); }
+    40% { transform: translate(10px, -8px) rotate(1.5deg); }
+    60% { transform: translate(-8px, -10px) rotate(-1deg); }
+    80% { transform: translate(8px, 10px) rotate(1deg); }
+}
+@keyframes set01-wobble {
+    0%,100% { transform: rotate(-8deg) scale(1); }
+    50% { transform: rotate(8deg) scale(1.08); }
+}
+.set01-jumpscare {
+    position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
+    background: #000 center / contain no-repeat; animation: set01-js 1.1s ease-in-out forwards;
+}
+.set01-floater {
+    position: fixed; z-index: 2147483646; pointer-events: none; will-change: transform;
+}
+.set01-shaking { animation: set01-shake .65s cubic-bezier(.36,.07,.19,.97) both !important; }
+${settings.store.spinningImages ? `
+img[class*="avatar"], img[class*="emoji"], img[class*="sticker"], [class*="roleIcon"] img {
+    animation: set01-wobble 2.4s ease-in-out infinite !important;
+}` : ""}
+`;
+    document.head.appendChild(crazyStyleEl);
+}
+
+function jumpscare() {
+    const overlay = document.createElement("div");
+    overlay.className = "set01-jumpscare";
+    overlay.style.backgroundImage = `url("${url()}")`;
+    document.body.appendChild(overlay);
+
+    const snd = settings.store.jumpscareSound;
+    if (snd) {
+        try {
+            const audio = new Audio(snd);
+            audio.volume = 1;
+            audio.play().catch(() => { /* autoplay blocked */ });
+        } catch { /* bad url */ }
+    }
+    const t = window.setTimeout(() => overlay.remove(), 1200);
+    timers.push(t);
+}
+
+function scheduleJumpscare() {
+    const min = Math.max(2, settings.store.jumpscareMinSec) * 1000;
+    const max = Math.max(min + 1000, settings.store.jumpscareMaxSec * 1000);
+    const delay = min + Math.random() * (max - min);
+    const t = window.setTimeout(() => {
+        if (!active) return;
+        jumpscare();
+        scheduleJumpscare();
+    }, delay);
+    timers.push(t);
+}
+
+function spawnFloater() {
+    const img = document.createElement("img");
+    img.className = "set01-floater";
+    img.src = url();
+    const size = 50 + Math.random() * 90;
+    img.style.width = `${size}px`;
+    img.style.left = `${Math.random() * 100}vw`;
+    img.style.top = "110vh";
+    img.style.animation = `set01-float ${6 + Math.random() * 7}s linear forwards`;
+    document.body.appendChild(img);
+    const t = window.setTimeout(() => img.remove(), 14000);
+    timers.push(t);
+}
+
+function doShake() {
+    const app = document.getElementById("app-mount") || document.body;
+    app.classList.add("set01-shaking");
+    const t = window.setTimeout(() => app.classList.remove("set01-shaking"), 700);
+    timers.push(t);
+}
+
+function startChaos() {
+    injectCrazyCss();
+    if (settings.store.jumpscares) scheduleJumpscare();
+    if (settings.store.floatingImages) intervals.push(window.setInterval(() => active && spawnFloater(), 1400));
+    if (settings.store.screenShake) intervals.push(window.setInterval(() => active && doShake(), 9000));
+
+    restorers.push(() => {
+        timers.splice(0).forEach(clearTimeout);
+        intervals.splice(0).forEach(clearInterval);
+        document.querySelectorAll(".set01-jumpscare, .set01-floater").forEach(el => el.remove());
+        document.getElementById("app-mount")?.classList.remove("set01-shaking");
+        crazyStyleEl?.remove();
+        crazyStyleEl = undefined;
+    });
+}
+
 // ── Apply / revert the whole effect ───────────────────────────────────────────
 function applyEffects() {
     IconUtils = safeFind("getUserAvatarURL", "getGuildIconURL");
@@ -252,6 +378,7 @@ function applyEffects() {
     }
     if (settings.store.replaceAllText) startTextReplacer();
     if (settings.store.cssFallback) injectCss();
+    startChaos();
 }
 
 function revertEffects() {
