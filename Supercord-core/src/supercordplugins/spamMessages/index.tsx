@@ -10,6 +10,7 @@
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
+import ErrorBoundary from "@components/ErrorBoundary";
 import definePlugin, { OptionType } from "@utils/types";
 import { openModal } from "@webpack/common";
 
@@ -61,7 +62,11 @@ const SpamButton: ChatBarButtonFactory = ({ isMainChat }) => {
     return (
         <ChatBarButton
             tooltip={isSpamming() ? "Spamming... (click to manage)" : "Spam Messages"}
-            onClick={() => openModal(props => <SpamModal rootProps={props} />)}
+            onClick={() => openModal(props => (
+                <ErrorBoundary>
+                    <SpamModal rootProps={props} />
+                </ErrorBoundary>
+            ))}
         >
             <SpamIcon enabled={isSpamming()} />
         </ChatBarButton>
