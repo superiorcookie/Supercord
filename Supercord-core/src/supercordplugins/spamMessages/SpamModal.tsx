@@ -94,7 +94,7 @@ export function SpamModal({ rootProps }: { rootProps: ModalProps; }) {
                             </>
                         )}
                     </div>
-                    <Forms.FormText className={Margins.top8} type={Forms.FormText.Types.DESCRIPTION}>
+                    <Forms.FormText className={Margins.top8}>
                         The same file is re-uploaded for every message, so attachment spam is slower and more rate-limit prone.
                     </Forms.FormText>
                 </Forms.FormSection>
@@ -123,7 +123,7 @@ export function SpamModal({ rootProps }: { rootProps: ModalProps; }) {
                         onValueRender={v => `${Math.round(v)}ms`}
                         stickToMarkers={false}
                     />
-                    <Forms.FormText className={Margins.top8} type={Forms.FormText.Types.DESCRIPTION}>
+                    <Forms.FormText className={Margins.top8}>
                         Lower delays send faster but increase the chance of being rate limited.
                         Rate limits are handled automatically by waiting and resuming.
                     </Forms.FormText>
