@@ -5,8 +5,18 @@ const originalFs = require('original-fs');
 const { Readable } = require('stream');
 const { finished } = require('stream/promises');
 
-const GITHUB_API_URL = "https://api.github.com/repos/superiorcookie/Supercord/releases/latest";
-const VERSION_URL = "https://github.com/superiorcookie/Supercord/raw/refs/heads/main/version.txt";
+const GITHUB_REPO = "superiorcookie/Supercord";
+
+// === Update channel configuration ===
+//   - Production: BRANCH = "main",      RELEASE_TAG = "latest"
+//   - Testing:    BRANCH = "fotestong", RELEASE_TAG = "dev"
+const BRANCH = "fotestong";
+const RELEASE_TAG = "dev";
+
+const RELEASE_API_URL = RELEASE_TAG === "latest"
+  ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+  : `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${RELEASE_TAG}`;
+const VERSION_URL = `https://github.com/${GITHUB_REPO}/raw/refs/heads/${BRANCH}/version.txt`;
 const FETCH_HEADERS = { "User-Agent": "Supercord-Updater" };
 const APPDATA = process.env.APPDATA || (process.platform === "darwin" ? process.env.HOME + "/Library/Application Support" : "/var/local");
 const LOCALAPPDATA = process.env.LOCALAPPDATA || APPDATA;
@@ -47,7 +57,7 @@ function isNewer(remote, local) {
 
 // Fetch the latest release asar asset plus the remote version string (from version.txt on main).
 async function fetchRemoteInfo() {
-  const res = await fetch(GITHUB_API_URL, { headers: FETCH_HEADERS });
+  const res = await fetch(RELEASE_API_URL, { headers: FETCH_HEADERS });
   if (!res.ok) throw new Error("Failed to fetch release info: " + res.statusText);
 
   const release = await res.json();

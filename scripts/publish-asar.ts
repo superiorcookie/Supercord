@@ -37,28 +37,49 @@ async function main() {
         writeFileSync(versionAssetPath, version + "\n");
         console.log(`Publishing version: ${version}`);
 
-        // 2. Publish to GitHub using GH CLI
-        console.log("Uploading to latest GitHub release...");
-        
-        // Find the repository from git remote
+        // 2. Determine the target release based on the branch.
+        //   - main / master  -> "latest" release (production)
+        //   - any other branch (e.g. fotestong) -> "dev" pre-release (testing)
         const repo = "superiorcookie/Supercord";
 
+        let branch = process.env.GITHUB_REF_NAME || process.env.BRANCH || "";
+        if (!branch) {
+            try {
+                branch = execSync("git rev-parse --abbrev-ref HEAD", { stdio: "pipe" }).toString().trim();
+            } catch {
+                branch = "main";
+            }
+        }
+
+        const isProd = branch === "main" || branch === "master";
+        const tag = isProd ? "latest" : "dev";
+        const isPrerelease = !isProd;
+
+        console.log(`Branch: ${branch} -> release tag: ${tag}${isPrerelease ? " (pre-release)" : ""}`);
         console.log(`Using repository: ${repo}`);
 
         const GITHUB_CLI = process.env.GITHUB_ACTIONS ? "gh" : '"C:\\Program Files\\GitHub CLI\\gh.exe"';
 
-        // Find latest release tag
-        let tag = "latest";
+        // Upload to the release for this tag, creating it if it doesn't exist yet.
+        let releaseExists = true;
         try {
-            const tagBuffer = execSync(`${GITHUB_CLI} release view --repo ${repo} --json tagName -q .tagName`, { stdio: "pipe" });
-            tag = tagBuffer.toString().trim();
-            if (!tag) tag = "latest";
-            
-            console.log(`Uploading to existing tag: ${tag}`);
+            execSync(`${GITHUB_CLI} release view ${tag} --repo ${repo}`, { stdio: "pipe" });
+        } catch {
+            releaseExists = false;
+        }
+
+        if (releaseExists) {
+            console.log(`Uploading to existing release: ${tag}`);
             execSync(`${GITHUB_CLI} release upload ${tag} "${asarPath}" "${versionAssetPath}" --repo ${repo} --clobber`, { stdio: "inherit" });
-        } catch (e) {
-            console.log(`No release found on ${repo}. Creating a new '${tag}' release...`);
-            execSync(`${GITHUB_CLI} release create ${tag} "${asarPath}" "${versionAssetPath}" --repo ${repo} --title "Latest Release" --notes "Auto-published release."`, { stdio: "inherit" });
+        } else {
+            console.log(`Creating new release: ${tag}`);
+            const title = isProd ? "Latest Release" : "Dev (Testing) Release";
+            const prereleaseFlag = isPrerelease ? " --prerelease" : "";
+            const targetFlag = ` --target ${branch}`;
+            execSync(
+                `${GITHUB_CLI} release create ${tag} "${asarPath}" "${versionAssetPath}" --repo ${repo} --title "${title}" --notes "Auto-published ${tag} release."${prereleaseFlag}${targetFlag}`,
+                { stdio: "inherit" }
+            );
         }
 
         console.log("Success! The newest ASAR is now live on GitHub.");

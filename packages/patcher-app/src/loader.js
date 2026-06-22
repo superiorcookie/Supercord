@@ -33,8 +33,20 @@ const STAGED_VERSION = STAGED + ".version";
 const VERSION_FILE = path.join(BASE_DIR, "version.txt");
 const PATCHER = path.join(ASAR, "patcher.js");
 
-const GITHUB_API_URL = "https://api.github.com/repos/superiorcookie/Supercord/releases/latest";
-const VERSION_URL = "https://github.com/superiorcookie/Supercord/raw/refs/heads/main/version.txt";
+const GITHUB_REPO = "superiorcookie/Supercord";
+
+// === Update channel configuration ===
+// BRANCH: which branch's version.txt is the source of truth for the latest version.
+// RELEASE_TAG: which GitHub release the desktop.asar is downloaded from.
+//   - Production: BRANCH = "main",      RELEASE_TAG = "latest"
+//   - Testing:    BRANCH = "fotestong", RELEASE_TAG = "dev"
+const BRANCH = "fotestong";
+const RELEASE_TAG = "dev";
+
+const RELEASE_API_URL = RELEASE_TAG === "latest"
+    ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+    : `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${RELEASE_TAG}`;
+const VERSION_URL = `https://github.com/${GITHUB_REPO}/raw/refs/heads/${BRANCH}/version.txt`;
 const FETCH_HEADERS = { "User-Agent": "Supercord-Updater" };
 
 // How long to wait after startup before checking for updates (don't slow down boot).
@@ -118,8 +130,8 @@ async function checkForUpdates() {
 
     log("Update available:", localVersion || "unknown", "->", remoteVersion, "- downloading for next launch...");
 
-    // The asar itself is downloaded from the latest GitHub release.
-    const res = await fetch(GITHUB_API_URL, { headers: FETCH_HEADERS });
+    // The asar itself is downloaded from the configured GitHub release.
+    const res = await fetch(RELEASE_API_URL, { headers: FETCH_HEADERS });
     if (!res.ok) throw new Error("Failed to fetch release info: " + res.status);
 
     const release = await res.json();

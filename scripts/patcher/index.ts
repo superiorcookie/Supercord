@@ -6,8 +6,18 @@ import { createWriteStream } from "fs";
 
 // Patcher script to inject Supercord-Core ASAR into official Discord
 
-const GITHUB_API_URL = "https://api.github.com/repos/superiorcookie/Supercord/releases/latest";
-const VERSION_URL = "https://github.com/superiorcookie/Supercord/raw/refs/heads/main/version.txt";
+const GITHUB_REPO = "superiorcookie/Supercord";
+
+// === Update channel configuration ===
+//   - Production: BRANCH = "main",      RELEASE_TAG = "latest"
+//   - Testing:    BRANCH = "fotestong", RELEASE_TAG = "dev"
+const BRANCH = "fotestong";
+const RELEASE_TAG = "dev";
+
+const RELEASE_API_URL = RELEASE_TAG === "latest"
+    ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+    : `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${RELEASE_TAG}`;
+const VERSION_URL = `https://github.com/${GITHUB_REPO}/raw/refs/heads/${BRANCH}/version.txt`;
 const FETCH_HEADERS = { "User-Agent": "Supercord-Updater" };
 const APPDATA = process.env.APPDATA || (process.platform === "darwin" ? process.env.HOME + "/Library/Application Support" : "/var/local");
 const LOCALAPPDATA = process.env.LOCALAPPDATA || APPDATA;
@@ -47,7 +57,7 @@ function isNewer(remote: string, local: string): boolean {
 
 async function downloadLatestAsar() {
     console.log("Fetching latest release from GitHub...");
-    const res = await fetch(GITHUB_API_URL, { headers: FETCH_HEADERS });
+    const res = await fetch(RELEASE_API_URL, { headers: FETCH_HEADERS });
     if (!res.ok) throw new Error("Failed to fetch release info: " + res.statusText);
 
     const release = await res.json();

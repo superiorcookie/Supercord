@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - fotestong
   workflow_dispatch:
 
 jobs:
@@ -60,5 +61,5 @@ jobs:
             echo "No version change to commit."
           else
             git commit -m "chore: bump version.txt to ${{ steps.bump.outputs.new_version }} [skip ci]"
-            git push
+            git push origin HEAD:${{ github.ref_name }}
           fi
