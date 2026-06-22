@@ -26,8 +26,39 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
+      - name: Bump version.txt
+        id: bump
+        shell: bash
+        run: |
+          ver=$(tr -d '[:space:]' < version.txt)
+          if [ -z "$ver" ]; then ver="0.0.0"; fi
+          base="${ver%.*}"
+          last="${ver##*.}"
+          if [ "$base" = "$ver" ]; then
+            # no dot in version, increment the whole thing
+            new="$((ver + 1))"
+          else
+            new="$base.$((last + 1))"
+          fi
+          echo "$new" > version.txt
+          echo "Bumped version: $ver -> $new"
+          echo "new_version=$new" >> "$GITHUB_OUTPUT"
+
       - name: Run publish:asar
         run: bun run publish:asar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit bumped version.txt
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.txt
+          if git diff --cached --quiet; then
+            echo "No version change to commit."
+          else
+            git commit -m "chore: bump version.txt to ${{ steps.bump.outputs.new_version }} [skip ci]"
+            git push
+          fi

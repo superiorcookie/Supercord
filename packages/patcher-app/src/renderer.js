@@ -8,6 +8,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnText = patchBtn.querySelector('.btn-text');
   const unpatchBtn = document.getElementById('unpatch-btn');
   const unpatchBtnText = unpatchBtn.querySelector('.btn-text');
+  const versionInfo = document.getElementById('version-info');
+
+  async function refreshStatus() {
+    try {
+      const status = await window.electronAPI.getStatus();
+
+      if (!status.installed) {
+        versionInfo.textContent = status.latestVersion
+          ? `Not installed · Latest v${status.latestVersion}`
+          : 'Not installed';
+        btnText.textContent = 'Install Supercord';
+      } else if (status.updateAvailable) {
+        versionInfo.textContent = `Update available: v${status.localVersion} → v${status.latestVersion}`;
+        btnText.textContent = 'Update Supercord';
+      } else {
+        versionInfo.textContent = status.localVersion
+          ? `Installed · v${status.localVersion} (up to date)`
+          : 'Installed';
+        btnText.textContent = 'Reinstall Supercord';
+      }
+    } catch (e) {
+      versionInfo.textContent = '';
+    }
+  }
+
+  refreshStatus();
 
   minimizeBtn.addEventListener('click', () => {
     window.electronAPI.minimizeApp();

@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
 async function main() {
@@ -15,6 +15,27 @@ async function main() {
         if (!existsSync(asarPath)) {
             throw new Error(`Build failed, could not find desktop.asar at ${asarPath}`);
         }
+
+        // 1b. Resolve the version to publish (from version.txt, falling back to the core package.json)
+        const versionTxtPath = join(process.cwd(), "version.txt");
+        let version = "";
+        if (existsSync(versionTxtPath)) {
+            version = readFileSync(versionTxtPath, "utf8").trim();
+        }
+        if (!version) {
+            try {
+                const corePkg = JSON.parse(readFileSync(join(process.cwd(), "Supercord-core", "package.json"), "utf8"));
+                version = String(corePkg.version || "").trim();
+            } catch {
+                /* ignore */
+            }
+        }
+        if (!version) version = `build-${Date.now()}`;
+
+        // Write version.txt next to the asar so it can be uploaded as a release asset.
+        const versionAssetPath = join(process.cwd(), "Supercord-core", "dist", "version.txt");
+        writeFileSync(versionAssetPath, version + "\n");
+        console.log(`Publishing version: ${version}`);
 
         // 2. Publish to GitHub using GH CLI
         console.log("Uploading to latest GitHub release...");
@@ -34,10 +55,10 @@ async function main() {
             if (!tag) tag = "latest";
             
             console.log(`Uploading to existing tag: ${tag}`);
-            execSync(`${GITHUB_CLI} release upload ${tag} "${asarPath}" --repo ${repo} --clobber`, { stdio: "inherit" });
+            execSync(`${GITHUB_CLI} release upload ${tag} "${asarPath}" "${versionAssetPath}" --repo ${repo} --clobber`, { stdio: "inherit" });
         } catch (e) {
             console.log(`No release found on ${repo}. Creating a new '${tag}' release...`);
-            execSync(`${GITHUB_CLI} release create ${tag} "${asarPath}" --repo ${repo} --title "Latest Release" --notes "Auto-published release."`, { stdio: "inherit" });
+            execSync(`${GITHUB_CLI} release create ${tag} "${asarPath}" "${versionAssetPath}" --repo ${repo} --title "Latest Release" --notes "Auto-published release."`, { stdio: "inherit" });
         }
 
         console.log("Success! The newest ASAR is now live on GitHub.");

@@ -238,3 +238,12 @@ h1 {
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
 }
+
+.version-info {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}

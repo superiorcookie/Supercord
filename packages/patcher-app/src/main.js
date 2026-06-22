@@ -6,13 +6,60 @@ const { Readable } = require('stream');
 const { finished } = require('stream/promises');
 
 const GITHUB_API_URL = "https://api.github.com/repos/superiorcookie/Supercord/releases/latest";
+const VERSION_URL = "https://github.com/superiorcookie/Supercord/raw/refs/heads/main/version.txt";
+const FETCH_HEADERS = { "User-Agent": "Supercord-Updater" };
 const APPDATA = process.env.APPDATA || (process.platform === "darwin" ? process.env.HOME + "/Library/Application Support" : "/var/local");
 const LOCALAPPDATA = process.env.LOCALAPPDATA || APPDATA;
 
 const SUPERCORD_CORE_DIR = path.join(APPDATA, "Supercord-Core");
 const ASAR_DEST = path.join(SUPERCORD_CORE_DIR, "desktop.asar");
+const LOADER_DEST = path.join(SUPERCORD_CORE_DIR, "loader.js");
+const VERSION_DEST = path.join(SUPERCORD_CORE_DIR, "version.txt");
 
 let mainWindow;
+
+function readLocalVersion() {
+  try {
+    return fs.readFileSync(VERSION_DEST, "utf8").trim();
+  } catch {
+    return "";
+  }
+}
+
+function isNewer(remote, local) {
+  if (!remote) return false;
+  if (!local) return true;
+  if (remote === local) return false;
+
+  const r = remote.split(".").map(n => parseInt(n, 10));
+  const l = local.split(".").map(n => parseInt(n, 10));
+  const allNumeric = [...r, ...l].every(n => Number.isFinite(n));
+  if (!allNumeric) return remote !== local;
+
+  for (let i = 0; i < Math.max(r.length, l.length); i++) {
+    const a = r[i] || 0;
+    const b = l[i] || 0;
+    if (a > b) return true;
+    if (a < b) return false;
+  }
+  return false;
+}
+
+// Fetch the latest release asar asset plus the remote version string (from version.txt on main).
+async function fetchRemoteInfo() {
+  const res = await fetch(GITHUB_API_URL, { headers: FETCH_HEADERS });
+  if (!res.ok) throw new Error("Failed to fetch release info: " + res.statusText);
+
+  const release = await res.json();
+  const assets = Array.isArray(release.assets) ? release.assets : [];
+  const asarAsset = assets.find(a => a.name === "desktop.asar");
+
+  let remoteVersion = (release.tag_name || "").trim();
+  const vr = await fetch(VERSION_URL, { headers: FETCH_HEADERS });
+  if (vr.ok) remoteVersion = (await vr.text()).trim();
+
+  return { release, asarAsset, remoteVersion };
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -56,26 +103,39 @@ ipcMain.on('minimize-app', () => {
 ipcMain.handle('start-patch', async (event) => {
   try {
     mainWindow.webContents.send('patch-status', { step: 1, message: 'Fetching latest release info...' });
-    
-    const res = await fetch(GITHUB_API_URL);
-    if (!res.ok) throw new Error("Failed to fetch release info: " + res.statusText);
-    
-    const release = await res.json();
-    const asset = release.assets.find((a) => a.name === "desktop.asar");
-    if (!asset) throw new Error("desktop.asar not found in the latest release!");
 
-    mainWindow.webContents.send('patch-status', { step: 2, message: `Downloading desktop.asar (v${release.tag_name})...` });
-    
+    const { asarAsset, remoteVersion } = await fetchRemoteInfo();
+    if (!asarAsset) throw new Error("desktop.asar not found in the latest release!");
+
     if (!fs.existsSync(SUPERCORD_CORE_DIR)) {
       fs.mkdirSync(SUPERCORD_CORE_DIR, { recursive: true });
     }
 
-    const downloadRes = await fetch(asset.browser_download_url);
-    if (!downloadRes.ok) throw new Error("Failed to download ASAR: " + downloadRes.statusText);
-    
-    const body = Readable.fromWeb(downloadRes.body);
-    await finished(body.pipe(originalFs.createWriteStream(ASAR_DEST)));
-    
+    const localVersion = readLocalVersion();
+    const needsDownload = !fs.existsSync(ASAR_DEST) || isNewer(remoteVersion, localVersion);
+
+    if (needsDownload) {
+      mainWindow.webContents.send('patch-status', { step: 2, message: `Downloading desktop.asar (${remoteVersion || 'latest'})...` });
+
+      const downloadRes = await fetch(asarAsset.browser_download_url, { headers: FETCH_HEADERS });
+      if (!downloadRes.ok) throw new Error("Failed to download ASAR: " + downloadRes.statusText);
+
+      const body = Readable.fromWeb(downloadRes.body);
+      await finished(body.pipe(originalFs.createWriteStream(ASAR_DEST)));
+
+      // Record the installed version for the auto-updater to compare against.
+      if (remoteVersion) fs.writeFileSync(VERSION_DEST, remoteVersion);
+    } else {
+      mainWindow.webContents.send('patch-status', { step: 2, message: `Already up to date (${localVersion}). Re-injecting...` });
+    }
+
+    // Install / refresh the auto-update loader next to the asar.
+    try {
+      fs.copyFileSync(path.join(__dirname, 'loader.js'), LOADER_DEST);
+    } catch (e) {
+      console.error("Failed to install loader.js:", e);
+    }
+
     mainWindow.webContents.send('patch-status', { step: 3, message: 'Closing Discord & Injecting...' });
     
     // Close Discord
@@ -107,11 +167,12 @@ ipcMain.handle('start-patch', async (event) => {
     const coreDir = path.join(modulesDir, cores[0], "discord_desktop_core");
     const indexPath = path.join(coreDir, "index.js");
 
-    const targetRequire = `require("${ASAR_DEST.replace(/\\/g, "/")}/patcher.js");`;
-    
+    // Point Discord at the auto-update loader instead of the asar directly.
+    const loaderRequire = `require("${LOADER_DEST.replace(/\\/g, "/")}");`;
+
     let content = fs.readFileSync(indexPath, "utf8");
-    if (!content.includes(targetRequire)) {
-      content = `${targetRequire}\nmodule.exports = require('./core.asar');\n`;
+    if (!content.includes(loaderRequire)) {
+      content = `${loaderRequire}\nmodule.exports = require('./core.asar');\n`;
       fs.writeFileSync(indexPath, content);
     }
     
@@ -183,4 +244,29 @@ ipcMain.handle('start-unpatch', async (event) => {
     mainWindow.webContents.send('patch-status', { step: -1, message: err.message });
     return { success: false, error: err.message };
   }
+});
+
+// Returns the currently installed version, the latest available version, and whether
+// Supercord is installed / an update is available. Used to populate the UI.
+ipcMain.handle('get-status', async () => {
+  const installed = fs.existsSync(ASAR_DEST);
+  const localVersion = readLocalVersion();
+
+  let latestVersion = "";
+  let updateAvailable = false;
+  try {
+    const { remoteVersion } = await fetchRemoteInfo();
+    latestVersion = remoteVersion;
+    updateAvailable = installed && isNewer(remoteVersion, localVersion);
+  } catch (e) {
+    // Offline or rate limited - just report what we know locally.
+    console.error("Failed to fetch remote version:", e.message);
+  }
+
+  return {
+    installed,
+    localVersion: localVersion || null,
+    latestVersion: latestVersion || null,
+    updateAvailable
+  };
 });
