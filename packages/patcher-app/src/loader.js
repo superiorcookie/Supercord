@@ -35,13 +35,19 @@ const PATCHER = path.join(ASAR, "patcher.js");
 
 const GITHUB_REPO = "superiorcookie/Supercord";
 
-// === Update channel configuration ===
-// BRANCH: which branch's version.txt is the source of truth for the latest version.
-// RELEASE_TAG: which GitHub release the desktop.asar is downloaded from.
-//   - Production: BRANCH = "main",      RELEASE_TAG = "latest"
-//   - Testing:    BRANCH = "fotestong", RELEASE_TAG = "dev"
-const BRANCH = "fotestong";
-const RELEASE_TAG = "dev";
+// === Update channel ===
+// The channel is chosen by the patcher and written to update-channel.json next to this
+// loader. It selects which branch's version.txt and which release the updates come from.
+// Defaults to the stable channel (main branch / latest release) if no config is present.
+let BRANCH = "main";
+let RELEASE_TAG = "latest";
+try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(BASE_DIR, "update-channel.json"), "utf8"));
+    if (cfg && cfg.branch) BRANCH = cfg.branch;
+    if (cfg && cfg.releaseTag) RELEASE_TAG = cfg.releaseTag;
+} catch {
+    /* no channel config - use stable defaults */
+}
 
 const RELEASE_API_URL = RELEASE_TAG === "latest"
     ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`

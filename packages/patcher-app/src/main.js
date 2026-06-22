@@ -7,16 +7,25 @@ const { finished } = require('stream/promises');
 
 const GITHUB_REPO = "superiorcookie/Supercord";
 
-// === Update channel configuration ===
-//   - Production: BRANCH = "main",      RELEASE_TAG = "latest"
-//   - Testing:    BRANCH = "fotestong", RELEASE_TAG = "dev"
-const BRANCH = "fotestong";
-const RELEASE_TAG = "dev";
+// === Update channels ===
+// Each channel maps to a branch (source of version.txt) and a GitHub release tag
+// (source of desktop.asar). The chosen channel is persisted next to the asar so the
+// auto-update loader knows which channel to follow.
+const CHANNELS = {
+  stable: { branch: "main", releaseTag: "latest" },
+  dev: { branch: "fotestong", releaseTag: "dev" }
+};
 
-const RELEASE_API_URL = RELEASE_TAG === "latest"
-  ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
-  : `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${RELEASE_TAG}`;
-const VERSION_URL = `https://github.com/${GITHUB_REPO}/raw/refs/heads/${BRANCH}/version.txt`;
+function releaseApiUrl(releaseTag) {
+  return releaseTag === "latest"
+    ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+    : `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${releaseTag}`;
+}
+
+function versionUrl(branch) {
+  return `https://github.com/${GITHUB_REPO}/raw/refs/heads/${branch}/version.txt`;
+}
+
 const FETCH_HEADERS = { "User-Agent": "Supercord-Updater" };
 const APPDATA = process.env.APPDATA || (process.platform === "darwin" ? process.env.HOME + "/Library/Application Support" : "/var/local");
 const LOCALAPPDATA = process.env.LOCALAPPDATA || APPDATA;
@@ -25,6 +34,7 @@ const SUPERCORD_CORE_DIR = path.join(APPDATA, "Supercord-Core");
 const ASAR_DEST = path.join(SUPERCORD_CORE_DIR, "desktop.asar");
 const LOADER_DEST = path.join(SUPERCORD_CORE_DIR, "loader.js");
 const VERSION_DEST = path.join(SUPERCORD_CORE_DIR, "version.txt");
+const CHANNEL_DEST = path.join(SUPERCORD_CORE_DIR, "update-channel.json");
 
 let mainWindow;
 
@@ -34,6 +44,17 @@ function readLocalVersion() {
   } catch {
     return "";
   }
+}
+
+// Returns the channel key that is currently installed ("stable" / "dev"), or null.
+function readInstalledChannel() {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(CHANNEL_DEST, "utf8"));
+    if (cfg && cfg.channel && CHANNELS[cfg.channel]) return cfg.channel;
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 function isNewer(remote, local) {
@@ -55,9 +76,11 @@ function isNewer(remote, local) {
   return false;
 }
 
-// Fetch the latest release asar asset plus the remote version string (from version.txt on main).
-async function fetchRemoteInfo() {
-  const res = await fetch(RELEASE_API_URL, { headers: FETCH_HEADERS });
+// Fetch the release asar asset plus the remote version string for a given channel.
+async function fetchRemoteInfo(channel) {
+  const { branch, releaseTag } = CHANNELS[channel] || CHANNELS.stable;
+
+  const res = await fetch(releaseApiUrl(releaseTag), { headers: FETCH_HEADERS });
   if (!res.ok) throw new Error("Failed to fetch release info: " + res.statusText);
 
   const release = await res.json();
@@ -65,7 +88,7 @@ async function fetchRemoteInfo() {
   const asarAsset = assets.find(a => a.name === "desktop.asar");
 
   let remoteVersion = (release.tag_name || "").trim();
-  const vr = await fetch(VERSION_URL, { headers: FETCH_HEADERS });
+  const vr = await fetch(versionUrl(branch), { headers: FETCH_HEADERS });
   if (vr.ok) remoteVersion = (await vr.text()).trim();
 
   return { release, asarAsset, remoteVersion };
@@ -110,22 +133,26 @@ ipcMain.on('minimize-app', () => {
   if (mainWindow) mainWindow.minimize();
 });
 
-ipcMain.handle('start-patch', async (event) => {
+ipcMain.handle('start-patch', async (event, channelArg) => {
   try {
-    mainWindow.webContents.send('patch-status', { step: 1, message: 'Fetching latest release info...' });
+    const channel = CHANNELS[channelArg] ? channelArg : "stable";
+    mainWindow.webContents.send('patch-status', { step: 1, message: `Fetching ${channel} release info...` });
 
-    const { asarAsset, remoteVersion } = await fetchRemoteInfo();
-    if (!asarAsset) throw new Error("desktop.asar not found in the latest release!");
+    const { asarAsset, remoteVersion } = await fetchRemoteInfo(channel);
+    if (!asarAsset) throw new Error(`desktop.asar not found in the ${channel} release!`);
 
     if (!fs.existsSync(SUPERCORD_CORE_DIR)) {
       fs.mkdirSync(SUPERCORD_CORE_DIR, { recursive: true });
     }
 
+    // If switching channels, always re-download even if the version looks the same.
+    const installedChannel = readInstalledChannel();
+    const channelChanged = installedChannel !== channel;
     const localVersion = readLocalVersion();
-    const needsDownload = !fs.existsSync(ASAR_DEST) || isNewer(remoteVersion, localVersion);
+    const needsDownload = channelChanged || !fs.existsSync(ASAR_DEST) || isNewer(remoteVersion, localVersion);
 
     if (needsDownload) {
-      mainWindow.webContents.send('patch-status', { step: 2, message: `Downloading desktop.asar (${remoteVersion || 'latest'})...` });
+      mainWindow.webContents.send('patch-status', { step: 2, message: `Downloading ${channel} build (${remoteVersion || 'latest'})...` });
 
       const downloadRes = await fetch(asarAsset.browser_download_url, { headers: FETCH_HEADERS });
       if (!downloadRes.ok) throw new Error("Failed to download ASAR: " + downloadRes.statusText);
@@ -138,6 +165,9 @@ ipcMain.handle('start-patch', async (event) => {
     } else {
       mainWindow.webContents.send('patch-status', { step: 2, message: `Already up to date (${localVersion}). Re-injecting...` });
     }
+
+    // Persist the selected channel so the loader follows the right branch/release.
+    fs.writeFileSync(CHANNEL_DEST, JSON.stringify({ channel, ...CHANNELS[channel] }, null, 2));
 
     // Install / refresh the auto-update loader next to the asar.
     try {
@@ -199,8 +229,8 @@ ipcMain.handle('start-patch', async (event) => {
       }
     }
     
-    mainWindow.webContents.send('patch-status', { step: 4, message: 'Successfully Patched!' });
-    return { success: true };
+    mainWindow.webContents.send('patch-status', { step: 4, message: `Successfully installed ${channel} build!` });
+    return { success: true, channel };
   } catch (err) {
     console.error(err);
     mainWindow.webContents.send('patch-status', { step: -1, message: err.message });
@@ -256,27 +286,29 @@ ipcMain.handle('start-unpatch', async (event) => {
   }
 });
 
-// Returns the currently installed version, the latest available version, and whether
-// Supercord is installed / an update is available. Used to populate the UI.
+// Returns the install state, the installed channel + version, and the latest version
+// for both channels (so the UI can show whether an update is available per channel).
 ipcMain.handle('get-status', async () => {
   const installed = fs.existsSync(ASAR_DEST);
   const localVersion = readLocalVersion();
+  const installedChannel = readInstalledChannel();
 
-  let latestVersion = "";
-  let updateAvailable = false;
-  try {
-    const { remoteVersion } = await fetchRemoteInfo();
-    latestVersion = remoteVersion;
-    updateAvailable = installed && isNewer(remoteVersion, localVersion);
-  } catch (e) {
-    // Offline or rate limited - just report what we know locally.
-    console.error("Failed to fetch remote version:", e.message);
-  }
-
-  return {
+  const result = {
     installed,
+    installedChannel,
     localVersion: localVersion || null,
-    latestVersion: latestVersion || null,
-    updateAvailable
+    channels: {}
   };
+
+  await Promise.all(Object.keys(CHANNELS).map(async channel => {
+    try {
+      const { remoteVersion } = await fetchRemoteInfo(channel);
+      const updateAvailable = installed && installedChannel === channel && isNewer(remoteVersion, localVersion);
+      result.channels[channel] = { latestVersion: remoteVersion || null, updateAvailable };
+    } catch (e) {
+      result.channels[channel] = { latestVersion: null, updateAvailable: false };
+    }
+  }));
+
+  return result;
 });

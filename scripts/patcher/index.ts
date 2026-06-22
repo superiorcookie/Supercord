@@ -8,11 +8,15 @@ import { createWriteStream } from "fs";
 
 const GITHUB_REPO = "superiorcookie/Supercord";
 
-// === Update channel configuration ===
-//   - Production: BRANCH = "main",      RELEASE_TAG = "latest"
-//   - Testing:    BRANCH = "fotestong", RELEASE_TAG = "dev"
-const BRANCH = "fotestong";
-const RELEASE_TAG = "dev";
+// === Update channels ===
+// Run with `--dev` (or SUPERCORD_CHANNEL=dev) to install the dev/testing build.
+const CHANNELS: Record<string, { branch: string; releaseTag: string; }> = {
+    stable: { branch: "main", releaseTag: "latest" },
+    dev: { branch: "fotestong", releaseTag: "dev" }
+};
+
+const CHANNEL = (process.argv.includes("--dev") || process.env.SUPERCORD_CHANNEL === "dev") ? "dev" : "stable";
+const { branch: BRANCH, releaseTag: RELEASE_TAG } = CHANNELS[CHANNEL];
 
 const RELEASE_API_URL = RELEASE_TAG === "latest"
     ? `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
@@ -26,6 +30,7 @@ const SUPERCORD_CORE_DIR = join(APPDATA, "Supercord-Core");
 const ASAR_DEST = join(SUPERCORD_CORE_DIR, "desktop.asar");
 const LOADER_DEST = join(SUPERCORD_CORE_DIR, "loader.js");
 const VERSION_DEST = join(SUPERCORD_CORE_DIR, "version.txt");
+const CHANNEL_DEST = join(SUPERCORD_CORE_DIR, "update-channel.json");
 const LOADER_SRC = join(__dirname, "..", "..", "packages", "patcher-app", "src", "loader.js");
 
 function readLocalVersion(): string {
@@ -93,10 +98,13 @@ async function downloadLatestAsar() {
 
 function installLoader() {
     try {
+        // Persist the chosen channel so the loader follows the right branch/release.
+        writeFileSync(CHANNEL_DEST, JSON.stringify({ channel: CHANNEL, branch: BRANCH, releaseTag: RELEASE_TAG }, null, 2));
+
         if (existsSync(LOADER_SRC)) {
             const loaderContent = readFileSync(LOADER_SRC, "utf8");
             writeFileSync(LOADER_DEST, loaderContent);
-            console.log("Installed auto-update loader.");
+            console.log(`Installed auto-update loader (${CHANNEL} channel).`);
         } else {
             console.warn("loader.js source not found at " + LOADER_SRC + " - auto-update will be unavailable.");
         }

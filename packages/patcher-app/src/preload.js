@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  startPatch: () => ipcRenderer.invoke('start-patch'),
+  startPatch: (channel) => ipcRenderer.invoke('start-patch', channel),
   startUnpatch: () => ipcRenderer.invoke('start-unpatch'),
   getStatus: () => ipcRenderer.invoke('get-status'),
   onPatchStatus: (callback) => ipcRenderer.on('patch-status', (_event, value) => callback(value)),

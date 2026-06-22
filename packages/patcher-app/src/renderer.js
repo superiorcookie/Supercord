@@ -1,32 +1,47 @@
 document.addEventListener('DOMContentLoaded', () => {
   const patchBtn = document.getElementById('patch-btn');
+  const devBtn = document.getElementById('dev-btn');
   const minimizeBtn = document.getElementById('minimize-btn');
   const closeBtn = document.getElementById('close-btn');
   const statusContainer = document.getElementById('status-container');
   const statusText = document.getElementById('status-text');
   const progressBar = document.getElementById('progress-bar');
   const btnText = patchBtn.querySelector('.btn-text');
+  const devBtnText = devBtn.querySelector('.btn-text');
   const unpatchBtn = document.getElementById('unpatch-btn');
   const unpatchBtnText = unpatchBtn.querySelector('.btn-text');
   const versionInfo = document.getElementById('version-info');
 
+  function setAllDisabled(disabled) {
+    patchBtn.disabled = disabled;
+    devBtn.disabled = disabled;
+    unpatchBtn.disabled = disabled;
+  }
+
   async function refreshStatus() {
     try {
       const status = await window.electronAPI.getStatus();
+      const stable = status.channels?.stable || {};
+      const dev = status.channels?.dev || {};
 
       if (!status.installed) {
-        versionInfo.textContent = status.latestVersion
-          ? `Not installed · Latest v${status.latestVersion}`
-          : 'Not installed';
+        const latest = stable.latestVersion ? ` · Stable v${stable.latestVersion}` : '';
+        versionInfo.textContent = `Not installed${latest}`;
         btnText.textContent = 'Install Supercord';
-      } else if (status.updateAvailable) {
-        versionInfo.textContent = `Update available: v${status.localVersion} → v${status.latestVersion}`;
-        btnText.textContent = 'Update Supercord';
+        devBtnText.textContent = 'Install Dev';
       } else {
-        versionInfo.textContent = status.localVersion
-          ? `Installed · v${status.localVersion} (up to date)`
-          : 'Installed';
-        btnText.textContent = 'Reinstall Supercord';
+        const ch = status.installedChannel || 'stable';
+        const chLabel = ch === 'dev' ? 'Dev' : 'Stable';
+        const cur = status.channels?.[ch] || {};
+        if (cur.updateAvailable) {
+          versionInfo.textContent = `${chLabel}: v${status.localVersion} → v${cur.latestVersion} (update available)`;
+        } else {
+          versionInfo.textContent = status.localVersion
+            ? `Installed · ${chLabel} v${status.localVersion} (up to date)`
+            : `Installed · ${chLabel}`;
+        }
+        btnText.textContent = ch === 'stable' ? 'Reinstall Supercord' : 'Switch to Stable';
+        devBtnText.textContent = ch === 'dev' ? 'Reinstall Dev' : 'Switch to Dev';
       }
     } catch (e) {
       versionInfo.textContent = '';
@@ -43,44 +58,44 @@ document.addEventListener('DOMContentLoaded', () => {
     window.electronAPI.closeApp();
   });
 
-  patchBtn.addEventListener('click', async () => {
-    patchBtn.disabled = true;
-    unpatchBtn.disabled = true;
-    btnText.textContent = 'Installing...';
+  // Shared install flow for both stable and dev channels.
+  async function runInstall(channel, button, textEl, installingLabel) {
+    setAllDisabled(true);
+    textEl.textContent = installingLabel;
     statusContainer.classList.remove('hidden');
     progressBar.style.width = '10%';
     progressBar.style.background = 'linear-gradient(90deg, var(--primary), #d946ef)';
 
-    const result = await window.electronAPI.startPatch();
+    const result = await window.electronAPI.startPatch(channel);
 
     if (result.success) {
-      btnText.textContent = 'Installed';
-      patchBtn.style.borderColor = 'var(--success)';
-      patchBtn.style.boxShadow = '0 10px 20px -10px var(--success)';
+      textEl.textContent = 'Installed';
+      button.style.borderColor = 'var(--success)';
+      button.style.boxShadow = '0 10px 20px -10px var(--success)';
       progressBar.style.background = 'var(--success)';
-      
+
       setTimeout(() => {
-        btnText.textContent = 'Exit';
-        patchBtn.disabled = false;
-        patchBtn.onclick = () => window.electronAPI.closeApp();
+        textEl.textContent = 'Exit';
+        button.disabled = false;
+        button.onclick = () => window.electronAPI.closeApp();
       }, 2000);
     } else {
-      btnText.textContent = 'Failed';
-      patchBtn.style.borderColor = 'var(--error)';
+      textEl.textContent = 'Failed';
+      button.style.borderColor = 'var(--error)';
       progressBar.style.background = 'var(--error)';
-      patchBtn.disabled = false;
-      
+
       setTimeout(() => {
-        btnText.textContent = 'Retry Install';
-        patchBtn.disabled = false;
-        unpatchBtn.disabled = false;
+        textEl.textContent = 'Retry';
+        setAllDisabled(false);
       }, 3000);
     }
-  });
+  }
+
+  patchBtn.addEventListener('click', () => runInstall('stable', patchBtn, btnText, 'Installing...'));
+  devBtn.addEventListener('click', () => runInstall('dev', devBtn, devBtnText, 'Installing Dev...'));
 
   unpatchBtn.addEventListener('click', async () => {
-    patchBtn.disabled = true;
-    unpatchBtn.disabled = true;
+    setAllDisabled(true);
     unpatchBtnText.textContent = 'Uninstalling...';
     statusContainer.classList.remove('hidden');
     progressBar.style.width = '10%';
@@ -92,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       unpatchBtnText.textContent = 'Uninstalled';
       unpatchBtn.style.borderColor = 'var(--success)';
       progressBar.style.background = 'var(--success)';
-      
+
       setTimeout(() => {
         unpatchBtnText.textContent = 'Exit';
         unpatchBtn.disabled = false;
@@ -102,11 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
       unpatchBtnText.textContent = 'Failed';
       unpatchBtn.style.borderColor = 'var(--error)';
       progressBar.style.background = 'var(--error)';
-      
+
       setTimeout(() => {
         unpatchBtnText.textContent = 'Retry Uninstall';
-        patchBtn.disabled = false;
-        unpatchBtn.disabled = false;
+        setAllDisabled(false);
       }, 3000);
     }
   });
