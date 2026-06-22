@@ -48,6 +48,27 @@ export function SpamModal({ rootProps }: { rootProps: ModalProps; }) {
 
             <ModalContent>
                 <Forms.FormSection className={Margins.top16}>
+                    <div
+                        style={{
+                            padding: "10px 12px",
+                            borderRadius: 6,
+                            border: "1px solid var(--status-danger)",
+                            background: "var(--background-modifier-accent)",
+                        }}
+                    >
+                        <Text variant="text-sm/semibold" style={{ color: "var(--status-danger)" }}>
+                            ⚠️ Disclaimer
+                        </Text>
+                        <Forms.FormText className={Margins.top4}>
+                            Spamming messages can violate Discord's Terms of Service and may get your
+                            account rate limited, flagged, or banned. Use this only in servers/DMs where
+                            you have permission, and at your own risk. You are solely responsible for how
+                            you use this plugin.
+                        </Forms.FormText>
+                    </div>
+                </Forms.FormSection>
+
+                <Forms.FormSection className={Margins.top16}>
                     <Forms.FormTitle>Message</Forms.FormTitle>
                     <TextInput
                         value={content}

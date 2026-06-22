@@ -75,7 +75,7 @@ const SpamButton: ChatBarButtonFactory = ({ isMainChat }) => {
 
 export default definePlugin({
     name: "SpamPlugin",
-    description: "Adds a button next to the gift button to spam messages in the current channel, group or DM with rate limit handling (up to 100).",
+    description: "Adds a button next to the gift button to spam messages in the current channel, group or DM with rate limit handling (up to 100). Use at your own risk — spamming may violate Discord's ToS.",
     authors: [{ name: "Supercord User", id: 0n }],
     dependencies: ["ChatInputButtonAPI"],
     tags: ["Chat", "Fun", "Utility"],
