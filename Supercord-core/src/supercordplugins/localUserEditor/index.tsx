@@ -12,7 +12,7 @@ import { definePluginSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import { EyeIcon, PencilIcon } from "@components/Icons";
 import { Switch } from "@components/Switch";
-import { EquicordDevs } from "@utils/constants";
+import { SupercordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { copyWithToast, fetchUserProfile } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
@@ -477,7 +477,7 @@ export default definePlugin({
     name: "LocalUserEditor",
     description: "Locally change user names, avatars, bios, pronouns, and hide friends/lists without changing anything server-side.",
     tags: ["Appearance", "Friends", "Utility"],
-    authors: [EquicordDevs.yash],
+    authors: [SupercordDevs.yash],
     settings,
     contextMenus: {
         "user-context": userContextPatch
